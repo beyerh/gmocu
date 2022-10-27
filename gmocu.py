@@ -1,11 +1,10 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.1_rc8, 2022-10-24'
+version  = 'gmocu-0.1_rc8, 2022-10-27'
 database = 'gmocu.db'
 
 # TODO:
 # upload abi sequencing file to ICE
-# update autorefill and dropdown after import from *.db file
 
 import PySimpleGUI as sg
 import pysimplesqlmod as ss 
@@ -1655,6 +1654,10 @@ while True:
     elif event == '-IMPORTGMOCU-':
         import_data()
         db=ss.Database(database, win,  sql_script=sql_script)
+        choices = autocomp()
+        orga_selection = select_orga()
+        win['-FEATURECOMBO-'].Update(values = orga_selection)
+        win['-SETSELORGA-'].Update(values = orga_selection)
 
 ### Info in settings ###
     elif event == '-SETTINGSINFO-':
