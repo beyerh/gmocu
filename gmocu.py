@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.1_rc8, 2022-10-27'
+version  = 'gmocu-0.1_rc9, 2022-11-xx'
 database = 'gmocu.db'
 
 # TODO:
+# update single entry on ice
 # upload abi sequencing file to ICE
 
 import PySimpleGUI as sg
@@ -23,32 +24,6 @@ logging.basicConfig(level=logging.DEBUG)               # <=== You can set the lo
 from multiprocessing import freeze_support
 freeze_support()
 
-# fix os-specific glitches
-headings=[' ID ','  Name  ','                      Alias                       ','  Status  ','G '] # Table column widths can be set by the spacing of the headings!
-features_headings = ['ID   ','   Annotation    ','                 Alias                 ','Risk ', 'Organism']
-organisms_headings = ['ID   ','               Full name                  ','      Short name     ','RG    ']
-spacer1 = '  '
-spacer2 = '          '
-spacer3 = '                   '
-spacer4 = ' '
-spacer5 = '                                '
-spacer6 = '     '
-spacer7 = ' '
-
-if sys.platform == "win32":
-    headings=['ID',' Name ','            Alias            ','Status','G '] # Table column widths can be set by the spacing of the headings!
-    features_headings = ['ID ','Annotation','        Alias        ','Risk', 'Organism']
-    organisms_headings = ['ID','           Full name          ','Short name ','RG']
-    spacer1 = ''
-    spacer2 = '           '
-    spacer3 = '                    '
-    spacer4 = ''
-    spacer5 = '                           '
-    spacer6 = ' '
-    spacer7 = ''
-
-#elif sys.platform.startswith("linux"):  # could be "linux", "linux2", "linux3", ...
-
 # get right path for pyinstaller
 if getattr(sys, 'frozen', False):
     application_path = os.path.dirname(sys.executable)
@@ -64,12 +39,65 @@ input_width = 20
 num_items_to_show = 5
 orga_selection = []
 
+# PySimpleGUI standard font size
+os_font_size = 13
+os_scale_factor = 1
+
+# fix os-specific glitches
+headings=[' ID ','  Name  ','                      Alias                       ','  Status  ','G '] # Table column widths can be set by the spacing of the headings!
+features_headings = ['ID   ','   Annotation    ','                 Alias                 ','Risk ', 'Organism']
+organisms_headings = ['ID   ','               Full name                  ','      Short name     ','RG    ']
+spacer1 = '  '
+spacer2 = '          '
+spacer3 = '                   '
+spacer4 = ' '
+spacer5 = '                                '
+spacer6 = '     '
+spacer7 = ' '
+spacer8 = '                              '
+spacer9 = '                             '
+spacer10 = '                             '
+alias_length = 59
+
+if sys.platform == "win32":
+    headings=['ID',' Name ','            Alias            ','Status','G '] # Table column widths can be set by the spacing of the headings!
+    features_headings = ['ID ','Annotation','        Alias        ','Risk', 'Organism']
+    organisms_headings = ['ID','           Full name          ','Short name ','RG']
+    spacer1 = ''
+    spacer2 = '           '
+    spacer3 = '                    '
+    spacer4 = ''
+    spacer5 = '                           '
+    spacer6 = ' '
+    spacer7 = ''
+    spacer8 = '                              '
+    spacer9 = '                             '
+    spacer10 = '                             '
+    alias_length = 59
+
+elif sys.platform.startswith("linux"):  # could be "linux", "linux2", "linux3", ...
+    headings=['ID','     Name     ','                            Alias                           ','     Status     ',' G '] # Table column widths can be set by the spacing of the headings!
+    features_headings = ['ID ','     Annotation     ','                 F       Alias                       ','  Risk  ', '  Organism   ' ]
+    organisms_headings = ['ID','                               Full name                             ','    Short name    ','  RG  ']
+    spacer1 = ''
+    spacer2 = '         '
+    spacer3 = '                   '
+    spacer4 = ''
+    spacer5 = '                           '
+    spacer6 = ' '
+    spacer7 = ''
+    spacer8 = '                              '
+    spacer9 = '                             '
+    spacer10 = '                             '
+    alias_length = 57
+    os_font_size = 13
+    os_scale_factor = 1.6
+
 # PySimpleGUI layout code
-font_size = sg.user_settings_get_entry('-FONTSIZE-', 13)
+font_size = sg.user_settings_get_entry('-FONTSIZE-', os_font_size)
 sg.set_options(font=("Helvetica", font_size))
 #sg.theme('DarkBlack')
 sg.theme(sg.user_settings_get_entry('-THEME-', 'Reddit'))  # set the theme
-
 
 img_base64 = b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAABeAAAAXgH42Q/5AAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAPtJREFUOI3tkjFKAwEQRd/fDZZCMCcQRFRCCi1SWdmksNDCC1jmAlmt0mRbsbDyAKKQQkstbAVtXG3EIwhpDRi/jcuuWTesvb+bYd5n+DOyTZl0+NzlEzteOymdKTNQL9kk0DUQYHccN28qGyhKFgl0h2l8t0YwaXvQepmeDQpw/3Ue6SoHA9RxeKkoqc800N5FyPv4DFgtrsUy0rn6t7XyDZZWjpE7BTjTFuOFox++aQY6eNoHTmfAmaxuehnZzic+V8kAPtLLiN7jdOJVNYJJu0agHdAQpeu5AeyWQEOkt6wMtwt/oChZR7r/Fbc3HDcf8q3CH/xV/wbwBe0pVw+ecPjyAAAAAElFTkSuQmCC'
 img2_base64 = b'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAUCAYAAABSx2cSAAAACXBIWXMAAAJhAAACYQHBMFX6AAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAOhJREFUOI3tz79OwlAUx/HvJTe1gW5iOqohcZHJuLv6Gs6uLvgADsbFGGZeQx+ADafqoEhiY4wabUyg/PFAexl0acCLneU3npzPOfkpaoEhT8RZM2dbHwAawNWKyqpjNeHnmFjSzEwDbPsurcOKFe83Hrlqx7MYIBokrJ/e/YpHk592KxKq4xuTwcZAX1JcrfA9Pf/Cd4ovvQmSGGa29jZLXB5sWCvs1jtcPw8pWLcWZIn/EQ5eR+xcPOTGGuhLYnjqjhVQzIXNSdUDUEf3ZRx5z/s5k2Y4oHretqJOJPNxLCm3b19/+jwFyitLV/vbA1oAAAAASUVORK5CYII='
@@ -82,7 +110,7 @@ record_columns=[
     ss.record('Plasmids.clone',no_label=True, size=(5,10))+
     ss.record('Plasmids.gb',no_label=True, visible=False, size=(0,10))+
     ss.record('Plasmids.date',no_label=True, readonly=True, size=(10,10)), # insvisible
-    [sg.T("                              ")]+
+    [sg.T(spacer8)]+
     ss.selector('cassettesSelector','Cassettes',size=(61,4)),
     ss.record('Cassettes.content',label='Cassette:',size=(46,10),)+
     [sg.Button('!', key=f'-info-', size=(1, 1)),]+
@@ -97,7 +125,7 @@ record_columns=[
     [sg.CB('Ignore Case', default=True, k='-IGNORE CASE-')],
     [sg.Text('                              ')] + [sg.pin(sg.Col([[sg.Listbox(values=[], size=(input_width, num_items_to_show), enable_events=True, key='-BOX-', select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, no_scrollbar=True)]], key='-BOX-CONTAINER-', pad=(0, 0), visible=False))],
 
-    ss.record('Plasmids.alias',label='Alias: ',size=(59,10))+[sg.Button('+', key=f'-ALIAS_IN-', size=(1, 1)),],
+    ss.record('Plasmids.alias',label='Alias: ',size=(alias_length,10))+[sg.Button('+', key=f'-ALIAS_IN-', size=(1, 1)),],
     ss.record('Plasmids.purpose',sg.MLine, (61, 3),label='Purpose: '),
     ss.record('Plasmids.summary',sg.MLine, (61, 3),label='Cloning summary: '),
     ss.record('Plasmids.backbone_vector',label= 'Orig. vector:', size=(29,10))+
@@ -120,7 +148,8 @@ record_columns=[
 ]
 
 selectors=[
-    ss.actions('plasmidActions','Plasmids') + [sg.Button('', image_data=img2_base64, button_color = (sg.theme_background_color(), sg.theme_background_color()), key=f'-DUPLICATE-')],
+    ss.actions('plasmidActions','Plasmids',search_size=(27, 1)) + [sg.Button('', image_data=img2_base64, button_color = (sg.theme_background_color(), sg.theme_background_color()), key=f'-DUPLICATE-')]+
+    [sg.Button('ICE', key=f'-THISICE-', size=(3, 1)),],
     ss.selector('tableSelector', 'Plasmids', element=sg.Table, headings=headings, visible_column_map=visible,num_rows=12), #15 rows
 ]
 '''
@@ -132,7 +161,7 @@ tablayout_plasmid = [
 # without frame
 tablayout_plasmid = selectors + record_columns
 
-sub_genebank = [ [sg.Text("                             "),]+
+sub_genebank = [ [sg.Text(spacer9),]+
     ss.record('Plasmids.gb_name', no_label=True, size=(42,10))+
     [sg.Text(""),]+
     [sg.Button('+', key=f'insGb', size=(1, 1)),]+
@@ -141,7 +170,7 @@ sub_genebank = [ [sg.Text("                             "),]+
     ss.record('Plasmids.genebank',no_label=True, size=(1,10)),
 ]
 
-tablayout_attach = [[sg.T("                             ")]+
+tablayout_attach = [[sg.T(spacer10)]+
 
     ss.selector('attachmentSelector','Attachments', size=(39,4))+
     [sg.Text(spacer7),]+
@@ -246,7 +275,7 @@ layout = [[sg.TabGroup([[sg.Tab('Plasmid data', tablayout_plasmid, key='-pldata-
                          ]], key='-tabs-', tab_location='top', selected_title_color='purple')],
                          ]
 ##### Window #####
-scale_factor = sg.user_settings_get_entry('-SCALE-', 1)
+scale_factor = sg.user_settings_get_entry('-SCALE-', os_scale_factor)
 win=sg.Window('GMOCU - GMO Documentation', layout, scaling=scale_factor, finalize=True)
 win['Plasmids.gb_name'].update(disabled=True)
 win['Plasmids.gb'].update(disabled=True)
@@ -268,6 +297,7 @@ db['Plasmids'].set_by_pk(selected_plasmid)
 
 # disable extra elements
 win['-DUPLICATE-'].update(disabled=True)
+win['-THISICE-'].update(disabled=True)
 win['-ALIAS_IN-'].update(disabled=True)
 win['insGb'].update(disabled=True)
 win['insElement'].update(disabled=True)
@@ -333,7 +363,7 @@ def read_settings():
 l = read_settings()
 user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13]
 sg.user_settings_set_entry('-THEME-', style)
-sg.user_settings_set_entry('-SCALE-', int(scale))
+sg.user_settings_set_entry('-SCALE-', float(scale))
 sg.user_settings_set_entry('-FONTSIZE-', int(font_size))
 
 ### autocomplete ###
@@ -553,7 +583,7 @@ def generate_plasmidlist():
         
     return(pL_data)
 
-def upload_ice():
+def upload_ice(thisice):
 
     try:
         configuration = dict(
@@ -591,6 +621,9 @@ def upload_ice():
 
         connection = sqlite3.connect(database)
         local_plasmids = pd.read_sql_query("SELECT * FROM Plasmids ", connection)
+        ### condition to overwrite local_plasmids here for THISICE button. Only upload/update the currently selected button.
+        if thisice != '':
+            local_plasmids = pd.read_sql_query("SELECT * FROM Plasmids WHERE name = (?)", connection, params=(thisice,))
         status_values = pd.read_sql_query("SELECT * FROM SelectionValues ", connection)
         cassettes =  pd.read_sql_query("SELECT * FROM Cassettes ", connection)
         connection.close()
@@ -629,6 +662,8 @@ def upload_ice():
                 if values['-ONLYNEW-'] == True and plasmid['name'] in newly_added_plasmids:
                     addme = True
                 elif values['-ONLYNEW-'] == False:
+                    addme = True
+                if thisice != '': # overwrite checkbox setting in case thisice option is used for updating the currently selected plasmid.
                     addme = True
 
                 if plasmid['name'] in ice_plasmid_names and addme == True:
@@ -952,7 +987,6 @@ if initials_value == '__':
     db['Settings'].save_record(display_message=False)
 
 
-
 # WHILE
 #-------------------------------------------------------
 while True:
@@ -987,6 +1021,7 @@ while True:
     elif event == 'plasmidActions.edit_protect':
         # enable extra elements
         win['-DUPLICATE-'].update(disabled=False)
+        win['-THISICE-'].update(disabled=False)
         win['-ADDFEATURE-'].update(disabled=False)
         win['-ALIAS_IN-'].update(disabled=False)
         win['insGb'].update(disabled=False)
@@ -1010,8 +1045,8 @@ while True:
         win['Settings.gdrive_glossary'].update(disabled=False)
         win['Settings.style'].update(disabled=False)
         win['-SETSTYLE-'].update(disabled=False)
-        win['Settings.scale'].update(disabled=False) # disable here if needed
-        win['Settings.font_size'].update(disabled=False) # disable here if needed
+        win['Settings.scale'].update(disabled=True) # disable here if needed
+        win['Settings.font_size'].update(disabled=True) # disable here if needed
         win['Settings.duplicate_gmos'].update(disabled=False)
         win['Settings.upload_completed'].update(disabled=False)
         win['Settings.upload_abi'].update(disabled=True) # disabled for now
@@ -1076,6 +1111,11 @@ while True:
             db['Plasmids'].set_by_pk(out)
         
 ### GMOs ###
+    elif event == '-THISICE-':
+        thisice = db['Plasmids']['name']
+        upload = sg.popup_yes_no('Updating plasmid {} on ICE. Proceed?'.format(thisice))
+        if upload == 'Yes':
+            upload_ice(thisice)
     elif event == '-ADDORGA-':
         try:
             db['Plasmids'].save_record(display_message=False)
@@ -1560,7 +1600,7 @@ while True:
     elif event == '-ICE-':
         upload = sg.popup_yes_no('Dependind on the database size and internet connection it may take some time. Proceed?')
         if upload == 'Yes':
-            upload_ice()
+            upload_ice(thisice='')
 
 ### Formblatt Z ###
     elif event == '-FORMBLATT-':
@@ -1668,7 +1708,7 @@ while True:
         l = read_settings()
         user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13]
         sg.user_settings_set_entry('-THEME-', style)
-        sg.user_settings_set_entry('-SCALE-', int(scale))
+        sg.user_settings_set_entry('-SCALE-', float(scale))
         sg.user_settings_set_entry('-FONTSIZE-', int(font_size))
         db=None              # <= ensures proper closing of the sqlite database and runs a database optimization
         break

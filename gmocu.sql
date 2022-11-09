@@ -101,7 +101,7 @@ CREATE TABLE Settings(
 	"duplicate_gmos" INTEGER DEFAULT 0,
 	"upload_completed" INTEGER DEFAULT 0,
 	"upload_abi" INTEGER DEFAULT 0,
-	"scale" INTEGER DEFAULT 1,
+	"scale" FLOAT DEFAULT 1,
 	"font_size" INTEGER DEFAULT 13,
 	"style" TEXT DEFAULT 'Reddit',
 	FOREIGN KEY(ice) REFERENCES IceCredentials(id)
