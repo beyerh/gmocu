@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.1_rc9, 2022-11-xx'
+version  = 'gmocu-0.1_rc9, 2022-11-10'
 database = 'gmocu.db'
 
 # TODO:
@@ -44,7 +44,7 @@ os_font_size = 13
 os_scale_factor = 1
 
 # fix os-specific glitches
-headings=[' ID ','  Name  ','                      Alias                       ','  Status  ','G '] # Table column widths can be set by the spacing of the headings!
+headings=[' ID ','  Name  ','                     Alias                       ','  Status  ','G '] # Table column widths can be set by the spacing of the headings!
 features_headings = ['ID   ','   Annotation    ','                 Alias                 ','Risk ', 'Organism']
 organisms_headings = ['ID   ','               Full name                  ','      Short name     ','RG    ']
 spacer1 = '  '
@@ -53,7 +53,7 @@ spacer3 = '                   '
 spacer4 = ' '
 spacer5 = '                                '
 spacer6 = '     '
-spacer7 = ' '
+spacer7 = '  '
 spacer8 = '                              '
 spacer9 = '                             '
 spacer10 = '                             '
@@ -620,10 +620,11 @@ def upload_ice(thisice):
         ice_plasmid_names = [p['name'] for p in ice_plasmids]
 
         connection = sqlite3.connect(database)
-        local_plasmids = pd.read_sql_query("SELECT * FROM Plasmids ", connection)
         ### condition to overwrite local_plasmids here for THISICE button. Only upload/update the currently selected button.
         if thisice != '':
             local_plasmids = pd.read_sql_query("SELECT * FROM Plasmids WHERE name = (?)", connection, params=(thisice,))
+        else:
+            local_plasmids = pd.read_sql_query("SELECT * FROM Plasmids ", connection)
         status_values = pd.read_sql_query("SELECT * FROM SelectionValues ", connection)
         cassettes =  pd.read_sql_query("SELECT * FROM Cassettes ", connection)
         connection.close()
