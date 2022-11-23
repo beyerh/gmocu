@@ -54,6 +54,13 @@ To backup the database it suffices to copy the ```gmocu.db``` SQLite database fi
 
 Make a free account at https://public-registry.jbei.org/. Generate an access token in the account settings and add it in the GMOCU settings tab. Note that you may not be able to delete entries again from the registry. Alternatively, install a local jbei/ICE instance (see below).
 
+## Hidden settings
+
+### Specify scaling and fontsize and resed OS-dependent detection
+In the Settings tab, the fields for defining fontsize and scaling are inactivated (greyed out). Enable them by pressing the key combination ```Ctrl + e```. Now you can specify the values and save. Restart GMOCU.
+
+In order to reset the OS-depented automated setting of the font size and scaling values, enter ```__``` (double underscore) into the fields and save. Close GMOCU and delete the file ```gmocu.json``` in the project directory. Restart GMOCU.
+
 ## Install jbei/ICE as docker container on server
 
 - For reference, see [https://github.com/JBEI/ice/tree/trunk/docker](https://github.com/JBEI/ice/tree/trunk/docker).

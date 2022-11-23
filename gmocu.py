@@ -328,8 +328,9 @@ win['-ADDFAV-'].update(disabled=True)
 
 win.bind('<Down>', '-DOWNKEY-')
 win.bind('<Up>', '-UPKEY-')
-win.bind('<Return>', "-ENTERKEY-")
-win.bind('<Escape>', "-ESCAPEKEY-")
+win.bind('<Return>', '-ENTERKEY-')
+win.bind('<Escape>', '-ESCAPEKEY-')
+win.bind('<Control-KeyPress-e>', '-CTRL-E-') # trigger event with key press combination
 
 ### read settings ###
 def read_settings():
@@ -1711,6 +1712,10 @@ while True:
 ### Info in settings ###
     elif event == '-SETTINGSINFO-':
         sg.popup(version)
+
+    elif event == '-CTRL-E-':
+        win['Settings.scale'].update(disabled=False)
+        win['Settings.font_size'].update(disabled=False)
 
 ### Exit ###
     elif event == sg.WIN_CLOSED or event == 'Exit':
