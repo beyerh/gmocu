@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.1, 2022-11-17'
+version  = 'gmocu-0.2_rc1, 2022-11-23'
 database = 'gmocu.db'
 
 # TODO:
-# update single entry on ice
 # upload abi sequencing file to ICE
 
 import PySimpleGUI as sg
@@ -95,6 +94,7 @@ elif sys.platform.startswith("linux"):  # could be "linux", "linux2", "linux3", 
 
 # PySimpleGUI layout code
 font_size = sg.user_settings_get_entry('-FONTSIZE-', os_font_size)
+scale_factor = sg.user_settings_get_entry('-SCALE-', os_scale_factor)
 sg.set_options(font=("Helvetica", font_size))
 #sg.theme('DarkBlack')
 sg.theme(sg.user_settings_get_entry('-THEME-', 'Reddit'))  # set the theme
@@ -275,7 +275,6 @@ layout = [[sg.TabGroup([[sg.Tab('Plasmid data', tablayout_plasmid, key='-pldata-
                          ]], key='-tabs-', tab_location='top', selected_title_color='purple')],
                          ]
 ##### Window #####
-scale_factor = sg.user_settings_get_entry('-SCALE-', os_scale_factor)
 win=sg.Window('GMOCU - GMO Documentation', layout, scaling=scale_factor, finalize=True)
 win['Plasmids.gb_name'].update(disabled=True)
 win['Plasmids.gb'].update(disabled=True)
@@ -362,6 +361,15 @@ def read_settings():
 
 l = read_settings()
 user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13]
+
+if scale == '__':
+    scale = os_scale_factor
+if font_size == '__':
+    font_size = os_font_size
+    win['Settings.font_size'].update(font_size)
+    win['Settings.scale'].update(scale)
+    db['Settings'].save_record(display_message=False)
+
 sg.user_settings_set_entry('-THEME-', style)
 sg.user_settings_set_entry('-SCALE-', float(scale))
 sg.user_settings_set_entry('-FONTSIZE-', int(font_size))

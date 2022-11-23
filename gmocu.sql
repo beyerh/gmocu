@@ -120,5 +120,5 @@ INSERT INTO SelectionValues VALUES (2,"In Progress");
 INSERT INTO SelectionValues VALUES (3,"Abandoned");
 INSERT INTO SelectionValues VALUES (4,"Planned");
 
-INSERT INTO Settings VALUES (1, 'Name','__','xxx@xxx.com', 'Az.: xxx / Anlage Nr.: xxx', 1, 'ID from link', 0, 0, 0, 1, 13, 'Reddit');
+INSERT INTO Settings VALUES (1, 'Name','__','xxx@xxx.com', 'Az.: xxx / Anlage Nr.: xxx', 1, 'ID from link', 0, 0, 0, '__', '__', 'Reddit');
 INSERT INTO IceCredentials VALUES (1, 'ICE-lab.local','https://public-registry.jbei.org/','X-ICE-API-Token-Client', 'X-ICE-API-Token');
