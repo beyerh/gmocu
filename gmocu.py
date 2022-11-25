@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.2_rc1, 2022-11-23'
+version  = 'gmocu-0.2_rc1, 2022-11-25'
 database = 'gmocu.db'
 
 # TODO:
@@ -9,6 +9,7 @@ database = 'gmocu.db'
 import PySimpleGUI as sg
 import pysimplesqlmod as ss 
 import os, sys
+import ssl
 import sqlite3
 import pandas as pd
 import numpy as np
@@ -76,7 +77,7 @@ if sys.platform == "win32":
 
 elif sys.platform.startswith("linux"):  # could be "linux", "linux2", "linux3", ...
     headings=['ID','     Name     ','                            Alias                           ','     Status     ',' G '] # Table column widths can be set by the spacing of the headings!
-    features_headings = ['ID ','     Annotation     ','                 F       Alias                       ','  Risk  ', '  Organism   ' ]
+    features_headings = ['ID ','     Annotation     ','                         Alias                       ','  Risk  ', '  Organism   ' ]
     organisms_headings = ['ID','                               Full name                             ','    Short name    ','  RG  ']
     spacer1 = ''
     spacer2 = '         '
@@ -1514,6 +1515,8 @@ while True:
 
     elif event == '-ADDGOOGLE-':
         try:
+            #import ssl # import not here
+            ssl._create_default_https_context = ssl._create_unverified_context #monkeypatch
             sheet_id = db['Settings']['gdrive_glossary']
             sheet_name = 'features'
             url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
