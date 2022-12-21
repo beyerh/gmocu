@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.2_rc1, 2022-11-25'
+version  = 'gmocu-0.2_rc2, 2022-12-xx'
 database = 'gmocu.db'
 
 # TODO:
@@ -713,7 +713,7 @@ def upload_ice(thisice):
                                     ice.delete_part_record(ice_p['id'])
                                 except:
                                     pass
-                                ice.attach_record_to_part(ice_part_id=ice_p['id'], record_text=plasmid['genebank'])
+                                ice.attach_record_to_part(ice_part_id=ice_p['id'], filename=plasmid['name'] + '.gb', record_text=plasmid['genebank'])
                             
                             ice.add_to_folder([ice_p['id']], folders_ids=[folder_id])
 
@@ -1071,7 +1071,9 @@ while True:
 
     if event == 'plasmidActions.table_insert':
         selected_plasmid=db['Plasmids']['id']
-        win['Plasmids.name'].update('p' + initials + '000')
+        newname = 'p' + initials + '000'
+        newname_input = sg.popup_get_text('Enter the name for the new plasmid', default_text=newname)
+        win['Plasmids.name'].update(newname_input)
         db['Plasmids'].save_record(display_message=False)
         db['Plasmids'].set_by_pk(selected_plasmid)
 
