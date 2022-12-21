@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.2_rc2, 2022-12-xx'
+version  = 'gmocu-0.2, 2022-12-21'
 database = 'gmocu.db'
 
 # TODO:
