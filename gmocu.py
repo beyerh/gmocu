@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.2, 2022-12-21'
+version  = 'gmocu-0.3, 2023-01-XX'
 database = 'gmocu.db'
 
 # TODO:
@@ -651,6 +651,8 @@ def upload_ice(thisice):
             progress_bar.update_bar(idx)
             if upload_completed == 1 and plasmid['status'] != 1:
                 pass
+            if plasmid['name'] == 'p' + initials + '000' or '(Copy)' in plasmid['name']:
+                sg.popup("Plasmid name '" + plasmid['name'] + "' is not allowed, no upload. Please change the name.")
                 #sg.popup(plasmid['name'], plasmid['status'], ' not completed, no upload')
 
             else:

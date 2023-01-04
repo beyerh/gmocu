@@ -57,6 +57,7 @@ Make a free account at https://public-registry.jbei.org/. Generate an access tok
 ## Hidden settings
 
 ### Specify scaling and fontsize and resed OS-dependent detection
+
 In the Settings tab, the fields for defining fontsize and scaling are inactivated (greyed out). Enable them by pressing the key combination ```Ctrl + e```. Now you can specify the values and save. Restart GMOCU.
 
 In order to reset the OS-depented automated setting of the font size and scaling values, enter ```__``` (double underscore) into the fields and save. Close GMOCU and delete the file ```gmocu.json``` in the project directory. Restart GMOCU.
@@ -99,6 +100,21 @@ In order to reset the OS-depented automated setting of the font size and scaling
 - Login with "Administrator" as user and password.
 
 - Create a new user account and setup the access token.
+
+### Possible backup solution for docker volumes
+
+install [docker-vackup](https://github.com/BretFisher/docker-vackup)
+
+Script the following commands and execute them e.g. daily.Incude the tarballs into your regular backup solution:
+
+```bash
+cd ~/ &&
+/usr/local/bin/vackup export ice_ice_home ice_ice_home.tar.gz &&
+/usr/local/bin/vackup export ice_ice_index ice_ice_index.tar.gz &&
+/usr/local/bin/vackup export ice_postgres_db ice_postgres_db.tar.gz
+```
+
+You may execute the the backup commands via an automator app on macOS (this requires including the `PATH` variable in the script `PATH=$PATH:/usr/local/bin`) and schedule with the calendar app. Alternatively a corn job executed as user might work.
 
 ## Anaconda development environment
 
