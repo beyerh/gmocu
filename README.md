@@ -4,7 +4,7 @@ Plasmid database with GMO documentation.
 
 ## Download
 
-Download GMOCU for macOS and Windows from the [Releases](https://github.com/beyerh/gmocu/releases/tag/GMOCU-0.1) page.
+Download GMOCU for macOS and Windows from the [Releases](https://github.com/beyerh/gmocu/releases) page.
 
 ## Settings
 
