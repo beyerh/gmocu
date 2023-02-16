@@ -138,6 +138,13 @@ pip uninstall requests-cache
 pip install --pre requests-cache
 ```
 
+Deploy executable:
+
+```python
+conda activate gmocu
+pyinstaller gmocu.spec
+```
+
 ## Resources
 
 - [PySimpleSQL](https://github.com/PySimpleSQL)
