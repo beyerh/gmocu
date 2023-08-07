@@ -4,8 +4,5 @@ conda activate gmocu
 conda config --add channels conda-forge
 conda config --set channel_priority strict
 
-conda install PySimpleGUI pandas Pillow xlsxwriter
-pip install icebreaker https://github.com/pyinstaller/pyinstaller/tarball/develop
-
-pip uninstall requests-cache
-pip install --pre requests-cache
+conda install PySimpleGUI pandas Pillow xlsxwriter openpyxl
+pip install icebreaker pyinstaller

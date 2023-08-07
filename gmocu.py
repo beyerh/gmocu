@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.3, 2023-01-XX'
+version  = 'gmocu-0.3, 2023-08-01'
 database = 'gmocu.db'
 
 # TODO:
@@ -327,6 +327,7 @@ win['-ADDSELORGA-'].update(disabled=True)
 win['-COPYFAVORGA-'].update(disabled=True)
 win['-ADDFAV-'].update(disabled=True)
 
+# keyboard navigation
 win.bind('<Down>', '-DOWNKEY-')
 win.bind('<Up>', '-UPKEY-')
 win.bind('<Return>', '-ENTERKEY-')
@@ -364,6 +365,7 @@ def read_settings():
 l = read_settings()
 user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13]
 
+### GUI settings ###
 if scale == '__':
     scale = os_scale_factor
 if font_size == '__':
@@ -666,7 +668,7 @@ def upload_ice(thisice):
                     ice_plasmids.append(fetched_again)
                     ice_plasmid_names.append(plasmid['name'])
                     
-                # update index with just created plasmids online, TODO: this takes to much time
+                # update index with just created plasmids online, TODO: this takes too much time
                 #ice_plasmids = ice.get_collection_entries("PERSONAL")
                 #ice_plasmid_names = [p['name'] for p in ice_plasmids]
 
@@ -774,28 +776,31 @@ def import_data():
 
         while True:
             event, values = selwin.read()
-            if event == sg.WIN_CLOSED:
-                selected_plasmids = []
-                break
-            
-            if event == "-BUTTON-":
-                INDEX = int(''.join(map(str, selwin["-LIST-"].get_indexes())))
-                selected_plasmids.append(plasmids_to_import.pop(INDEX))
-                selwin["-LIST2-"].update(selected_plasmids)
-                selwin["-LIST-"].update(plasmids_to_import)
+            try:
+                if event == sg.WIN_CLOSED:
+                    selected_plasmids = []
+                    break
+                
+                if event == "-BUTTON-":
+                    INDEX = int(''.join(map(str, selwin["-LIST-"].get_indexes())))
+                    selected_plasmids.append(plasmids_to_import.pop(INDEX))
+                    selwin["-LIST2-"].update(selected_plasmids)
+                    selwin["-LIST-"].update(plasmids_to_import)
 
-            if event == "-BUTTON2-":
-                INDEX = int(''.join(map(str, selwin["-LIST2-"].get_indexes())))
-                plasmids_to_import.append(selected_plasmids.pop(INDEX))
-                selwin["-LIST2-"].update(selected_plasmids)
-                selwin["-LIST-"].update(plasmids_to_import)
+                if event == "-BUTTON2-":
+                    INDEX = int(''.join(map(str, selwin["-LIST2-"].get_indexes())))
+                    plasmids_to_import.append(selected_plasmids.pop(INDEX))
+                    selwin["-LIST2-"].update(selected_plasmids)
+                    selwin["-LIST-"].update(plasmids_to_import)
 
-            if event == "-BUTTON3-":
-                break
+                if event == "-BUTTON3-":
+                    break
 
-            if event == "-BUTTON4-":
-                selected_plasmids = plasmids_to_import_copy
-                break
+                if event == "-BUTTON4-":
+                    selected_plasmids = plasmids_to_import_copy
+                    break
+            except:
+                pass
 
         selwin.close()
 
@@ -1043,11 +1048,11 @@ while True:
         win['-down_gb-'].update(disabled=False)
         win['-ADDORGA-'].update(disabled=False)
         win['-DESTROYORGA-'].update(disabled=False)
-        win['-ADDFEATURE-'].update(disabled=False)
         win['-APPROVAL-'].update(disabled=False)
         win['-ADDFAV-'].update(disabled=False)
     elif event == 'featureActions.edit_protect':
         win['-FEATURECOMBO-'].update(disabled=False)
+
         #win['Features.organism'].update(disabled=True) #always disabled, not working?
     elif event == 'settingsActions.edit_protect':
         win['Settings.name'].update(disabled=False)
@@ -1083,6 +1088,11 @@ while True:
         choices = autocomp()
 
     elif event == 'organismActions.table_delete':
+        orga_selection = select_orga()
+        win['-FEATURECOMBO-'].Update(values = orga_selection)
+        win['-SETSELORGA-'].Update(values = orga_selection)
+
+    elif event == 'organismActions.db_save':
         orga_selection = select_orga()
         win['-FEATURECOMBO-'].Update(values = orga_selection)
         win['-SETSELORGA-'].Update(values = orga_selection)
@@ -1272,7 +1282,7 @@ while True:
             sg.popup(e)
 
 ### autocomplete ###
-    # pressing down arrow will trigger event -AIN- then aftewards event Down:40
+    # pressing down arrow will trigger event -AIN- then aftewards event Down:
     elif event == '-ESCAPEKEY-':
         win['-AIN-'].update('')
         win['-BOX-CONTAINER-'].update(visible=False)
@@ -1311,19 +1321,22 @@ while True:
         win['-AIN-'].update(value=values['-BOX-'])
         win['-BOX-CONTAINER-'].update(visible=False)
     elif event == '-ADDFEATURE-':
-        if values['-AIN-'] == "":
+        selected_dropdown_feature = values['-AIN-']
+        if selected_dropdown_feature[2:-3] in choices: # the truncation of values['-AIN-'][2:-3] is a hack to deal with the shape of 'choices' such as: ('Feature1'),
+            selected_dropdown_feature = selected_dropdown_feature[2:-3]
+        if selected_dropdown_feature == "":
             pass
         else:
             variant = '['+values['-VARIANT-']+']'
             if db['Cassettes']['content'] == 'Empty' or db['Cassettes']['content'] == '':
                 if values['-VARIANT-'] != '':
-                    win['Cassettes.content'].update(values['-AIN-'][2:-3] + variant)
+                    win['Cassettes.content'].update(selected_dropdown_feature + variant)
                 else:
-                    win['Cassettes.content'].update(values['-AIN-'][2:-3])
+                    win['Cassettes.content'].update(selected_dropdown_feature)
             elif values['-VARIANT-'] != '':
-                win['Cassettes.content'].update(db['Cassettes']['content'] + '-' + values['-AIN-'][2:-3] + variant)
+                win['Cassettes.content'].update(db['Cassettes']['content'] + '-' + selected_dropdown_feature + variant)
             else:
-                win['Cassettes.content'].update(db['Cassettes']['content'] + '-' + values['-AIN-'][2:-3])
+                win['Cassettes.content'].update(db['Cassettes']['content'] + '-' + selected_dropdown_feature)
             db['Cassettes'].save_record(display_message=False)
             win['-AIN-'].update('')
             win['-VARIANT-'].update('')
@@ -1381,11 +1394,11 @@ while True:
             worksheet.set_column(2, 2, 10, format)
             worksheet.set_column(3, 3, 10, format)
 
-            writer.save()
+            writer.close()
 
             sg.popup('Done.')
-        except Exception as e:
-            sg.popup(e)
+        except:
+            sg.popup('There must be more than one element in the list in order to use the export function.')
     elif event == '-USEDEXCELORGA-':
         try:
             connection = sqlite3.connect(database)
@@ -1447,16 +1460,16 @@ while True:
             worksheet.set_column(1, 1, 20, format)
             worksheet.set_column(2, 2, 10, format)
 
-            writer.save()
+            writer.close()
 
             sg.popup('Done.')
 
-        except Exception as e:
-            sg.popup(e)
+        except:
+            sg.popup('There must be more than one element in the list in order to use the export function.')
 
     elif event == '-IMPEXCEL-':
         try:
-            wb = pd.read_excel('Downloads/templates/nucleic_acid_features.xlsx',sheet_name = 0, engine='xlsxwriter')
+            wb = pd.read_excel('Downloads/templates/nucleic_acid_features.xlsx',sheet_name = 0)
             connection = sqlite3.connect(database)
             cursor = connection.cursor()
             cursor.execute("DELETE FROM Features")
@@ -1479,11 +1492,15 @@ while True:
             sg.popup('File Downloads/templates/nucleic_acid_features.xlsx does not exist.')
         else:
             source_dir = 'Downloads/templates/'
+            try:
+                os.unlink(os.path.join(source_dir, "nucleic_acid_features_imported.xlsx"))
+            except OSError:
+                pass
             os.rename(os.path.join(source_dir, 'nucleic_acid_features.xlsx'), os.path.join(source_dir, "nucleic_acid_features_imported.xlsx"))
             sg.popup('Downloads/templates/nucleic_acid_features.xlsx was renamed to nucleic_acid_features_imported.xlsx')
     elif event == '-IMPEXCELORGA-':
         try:
-            wb = pd.read_excel('Downloads/templates/organisms.xlsx',sheet_name = 0, engine='xlsxwriter')
+            wb = pd.read_excel('Downloads/templates/organisms.xlsx',sheet_name = 0)
             connection = sqlite3.connect(database)
             cursor = connection.cursor()
             cursor.execute("DELETE FROM Organisms")
@@ -1501,19 +1518,27 @@ while True:
             sg.popup('File Downloads/templates/organisms.xlsx does not exist.')
         else:
             source_dir = 'Downloads/templates/'
+            try:
+                os.unlink(os.path.join(source_dir, "organisms_imported.xlsx"))
+            except OSError:
+                pass
             os.rename(os.path.join(source_dir, 'organisms.xlsx'), os.path.join(source_dir, "organisms_imported.xlsx"))
             sg.popup('File Downloads/templates/organisms.xlsx was renamed to organisms_imported.xlsx')
 
-    elif event == '-ADDEXCEL-': # slow but at least working, more bugs likely
+    elif event == '-ADDEXCEL-':
         #TODO: file browse
         try:
-            wb = pd.read_excel('Downloads/templates/nucleic_acid_features.xlsx',sheet_name = 0, engine='xlsxwriter')
+            wb = pd.read_excel('Downloads/templates/nucleic_acid_features.xlsx',sheet_name = 0)
             add_to_features(wb)
             choices = autocomp()
         except FileNotFoundError:
             sg.popup('File Downloads/templates/nucleic_acid_features.xlsx does not exist.')
         else:
             source_dir = 'Downloads/templates/'
+            try:
+                os.unlink(os.path.join(source_dir, "nucleic_acid_features_imported.xlsx"))
+            except OSError:
+                pass
             os.rename(os.path.join(source_dir, 'nucleic_acid_features.xlsx'), os.path.join(source_dir, "nucleic_acid_features_imported.xlsx"))
             sg.popup('File Downloads/templates/nucleic_acid_features.xlsx was renamed to nucleic_acid_features_imported.xlsx')
 
@@ -1533,7 +1558,7 @@ while True:
     elif event == '-ADDEXCELORGA-': 
         #TODO: file browse
         try:
-            wb = pd.read_excel('Downloads/templates/organisms.xlsx',sheet_name = 0, engine='xlsxwriter')
+            wb = pd.read_excel('Downloads/templates/organisms.xlsx',sheet_name = 0)
             add_to_organisms(wb)
             orga_selection = select_orga()
             win['-FEATURECOMBO-'].Update(values = orga_selection)
@@ -1544,6 +1569,10 @@ while True:
             sg.popup(e)
         else:
             source_dir = 'Downloads/templates/'
+            try:
+                os.unlink(os.path.join(source_dir, "organisms_imported.xlsx"))
+            except OSError:
+                pass
             os.rename(os.path.join(source_dir, 'organisms.xlsx'), os.path.join(source_dir, "organisms_imported.xlsx"))
             sg.popup('File Downloads/templates/organisms.xlsx was renamed to organisms_imported.xlsx')
 
@@ -1669,7 +1698,7 @@ while True:
             worksheet.set_column(12, 12, 13, format)
             worksheet.set_column(13, 13, 10, format)
 
-            writer.save()
+            writer.close()
             sg.popup('Done.')
 
 ### Plasmid list ###
@@ -1704,7 +1733,7 @@ while True:
         worksheet.set_column(7, 7, 10, format)
         worksheet.set_column(8, 8, 10, format)
 
-        writer.save()
+        writer.close()
         sg.popup('Done.')
 
 ### Import data ###

@@ -22,7 +22,7 @@ Download GMOCU for macOS and Windows from the [Releases](https://github.com/beye
 
 ## Glossaries
 
-The ```Nucleic acids``` and ```Organisms``` glossaries can be imported and exported from and to ```*.xlsx``` files in the respective tabs. Another convenient way to manage the glossaries is to uplad the the ```GDrive_glossary.xlsx``` file to an Google Drive account, make the access public, and set the Google Sheets ID in the Settings tab (see section Settings). Entries can now be imported using the button ```Add entries from Google Sheet which not yet exist```.
+The ```Nucleic acids``` and ```Organisms``` glossaries can be imported and exported from and to ```*.xlsx``` files in the respective tabs. Another convenient way to manage the glossaries is to uplad the the ```GDrive_glossary.xlsx``` file to an Google Drive account, make the access public, and set the Google Sheets ID in the Settings tab (see section Settings). Entries can now be imported using the button ```Add entries from Google Sheet which not yet exist```. Plese do not modify the names of headers and sheets.
 
 ## Plasmid data
 
@@ -48,19 +48,19 @@ Import data from another ```gmocu.db``` file together with the associated nuclei
 
 ## Backup
 
-To backup the database it suffices to copy the ```gmocu.db``` SQLite database file located under ```GMOCU.app/Contents/MacOS``` for macOS releases or in the ```gmocu``` folder for Windows releases.
+To backup the database it suffices to copy the ```gmocu.db``` SQLite database file located under ```GMOCU.app/Contents/MacOS``` for macOS releases or in the ```gmocu``` folder for Windows releases. The file contains all relevant data. It is possible to store the ```gmocu.db``` file at a location which is synced via a cloud service such as Dropbox. Then, replace the file in the application folder with a softlink to that file. That way, one can work with the same database from different computers.
 
 ## Link to the public regestry jbei/ICE database
 
-Make a free account at https://public-registry.jbei.org/. Generate an access token in the account settings and add it in the GMOCU settings tab. Note that you may not be able to delete entries again from the registry. Alternatively, install a local jbei/ICE instance (see below).
+Make a free account at https://public-registry.jbei.org/. Generate an access token in the account settings and add it in the GMOCU settings tab. Note that you may not be able to delete entries again from the registry. Alternatively, install a local jbei/ICE instance (recommended, see below).
 
 ## Hidden settings
 
-### Specify scaling and fontsize and resed OS-dependent detection
+### Specify scaling and fontsize and reset OS-dependent detection
 
 In the Settings tab, the fields for defining fontsize and scaling are inactivated (greyed out). Enable them by pressing the key combination ```Ctrl + e```. Now you can specify the values and save. Restart GMOCU.
 
-In order to reset the OS-depented automated setting of the font size and scaling values, enter ```__``` (double underscore) into the fields and save. Close GMOCU and delete the file ```gmocu.json``` in the project directory. Restart GMOCU.
+In order to reset the OS-dependend automated setting of the font size and scaling values, enter ```__``` (double underscore) into the fields and save. Close GMOCU and delete the file ```gmocu.json``` in the project directory. Restart GMOCU.
 
 ## Install jbei/ICE as docker container on server
 
@@ -89,6 +89,12 @@ In order to reset the OS-depented automated setting of the font size and scaling
   ```yaml
   134.99.70.14:9999:8080
   ```
+  
+  For installation on a local machine without network access, set as:
+  
+  ```yaml
+  127.0.0.1:9999:8080
+  ```
 
 - Install jbei/ICE from docker hub, create containers and launch:
   
@@ -97,7 +103,7 @@ In order to reset the OS-depented automated setting of the font size and scaling
   docker-compose up
   ```
 
-- Login with "Administrator" as user and password.
+- Call the address set above in a browser and login with "Administrator" as user and password.
 
 - Create a new user account and setup the access token.
 
@@ -131,11 +137,8 @@ Set up the developmental ```gmocu``` environment:
 conda create --name gmocu python=3.9
 conda activate gmocu
 
-conda install PySimpleGUI pandas Pillow xlsxwriter
-pip install icebreaker https://github.com/pyinstaller/pyinstaller/tarball/develop
-
-pip uninstall requests-cache
-pip install --pre requests-cache
+conda install PySimpleGUI pandas Pillow xlsxwriter openpyxl
+pip install icebreaker pyinstaller
 ```
 
 Deploy executable:
