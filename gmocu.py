@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.3, 2023-08-18'
+version  = 'gmocu-0.3, 2023-08-21'
 database = 'gmocu.db'
 
 # TODO:
@@ -475,7 +475,7 @@ def add_to_organisms(wb):
     sg.popup('Adding: {}'.format(', '.join(wb['short_name'].tolist())))
     for idx in range(len(wb['short_name'])):
         #cursor.execute("INSERT INTO Organisms (short_name, full_name, RG) VALUES (?, ?, ?)", (wb['short_name'][idx], wb['full_name'][idx], format(float(wb['RG'][idx]),".0f")))
-        cursor.execute("INSERT INTO Organisms (short_name, full_name, RG) VALUES (?, ?, ?)", (wb['short_name'][idx], wb['full_name'][idx], wb['RG'][idx]))
+        cursor.execute("INSERT INTO Organisms (short_name, full_name, RG) VALUES (?, ?, ?)", (wb['short_name'][idx], wb['full_name'][idx], str(wb['RG'][idx])))
     connection.commit()
     connection.close()
     db['Organisms'].requery()
