@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.3, 2023-08-01'
+version  = 'gmocu-0.3, 2023-08-18'
 database = 'gmocu.db'
 
 # TODO:
@@ -186,8 +186,8 @@ tablayout_plasmid += [[sg.Frame('Attachments', tablayout_attach)]]
 ##### GMO #####
 tablayout_GMO = [
     [sg.Text('Maintenance')],
-    [sg.Button('Run', key=f'-CHECKFEATURES-'),] + [sg.Text('Check Nucleic acid feature glossory completeness')],
-    [sg.Button('Run', key=f'-CHECKORGANISMS-'),] + [sg.Text('Check Organisms glossory completeness')], 
+    [sg.Button('Run', key=f'-CHECKFEATURES-'),] + [sg.Text('Check Nucleic acid feature glossary completeness')],
+    [sg.Button('Run', key=f'-CHECKORGANISMS-'),] + [sg.Text('Check Organisms glossary completeness')], 
     [sg.Button('Run', key=f'-CHECKPLASMIDS-'),] + [sg.Text('Check for plasmid duplications and completeness')],
     [sg.Text('')],
     [sg.Text('jbei/ICE')], 
@@ -499,7 +499,7 @@ def generate_formblatt():
             connection = sqlite3.connect(database)
             cassettes = pd.read_sql_query("SELECT content FROM Cassettes WHERE plasmid_id = {}".format(plasmid_id), connection)
 
-            # split each cassette in the used features and combine
+            # split each cassette into the used features and combine
             used_features = cassettes['content'].tolist()
             # remove variants in []
             used_features = [re.sub('[\[].*?[\]]', '', feature) for feature in used_features]
@@ -514,8 +514,10 @@ def generate_formblatt():
                 element_organism = cursor.fetchone()
                 feature_organisms.append(element_organism[0])
                 cursor.execute("SELECT risk FROM Features WHERE annotation = ?", (i,))
-                element_risk = cursor.fetchone()
-                feature_risk.append(element_risk[0])
+                element_risk = cursor.fetchone()[0]
+                if element_risk == None or element_risk == '':
+                    element_risk = 'None'
+                feature_risk.append(element_risk)
             
             # get RG for source organisms
             source_rg = []
