@@ -458,6 +458,7 @@ def add_to_features(wb):
     wb['annotation'] = wb['annotation'].replace('\[', '(', regex=True)
     wb['annotation'] = wb['annotation'].replace(']', ')', regex=True)
     wb = wb[-wb["annotation"].isin(annots)] # remove rows from dataframe which are already in the table with the same annotation name
+    wb  = wb.fillna(value='None')
     wb = wb.reset_index() # required for loop below indexing
     sg.popup('Adding: {}'.format(', '.join(wb['annotation'].tolist())))
     for idx in range(len(wb['annotation'])):
@@ -1480,6 +1481,7 @@ while True:
             wb['annotation'] = wb['annotation'].replace('-', '_', regex=True)
             wb['annotation'] = wb['annotation'].replace('\[', '(', regex=True)
             wb['annotation'] = wb['annotation'].replace(']', ')', regex=True)
+            wb  = wb.fillna(value='None')
             wb.to_sql(name='Features',con=connection,if_exists='append', index=False, index_label='id')
             connection.commit()
             connection.close()
