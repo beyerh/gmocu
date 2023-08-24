@@ -355,7 +355,7 @@ def read_settings():
     style               = settings['style'][0]
 
     ice_instance        = credits['ice_instance'][0]
-    ice_token           = credits['ice_token'][0]
+    ice_token           = str(credits['ice_token'][0])
     ice_token_client    = credits['ice_token_client'][0]
 
     return [user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client]
@@ -601,6 +601,9 @@ def generate_plasmidlist():
 def upload_ice(thisice):
 
     try:
+        l = read_settings()
+        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13]
+
         configuration = dict(
         root = ice_instance,
         token = ice_token,
