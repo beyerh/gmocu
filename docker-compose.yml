@@ -8,7 +8,7 @@ services:
   ice:
     image: jbei/ice:latest
     ports:
-    - 134.99.70.14:9999:8080
+    - 127.0.0.1:9999:8080
     volumes:
     - ice_index:/var/lib/ice/lucene
     - ice_home:/usr/local/tomcat/data
