@@ -26,25 +26,25 @@ For instructions on installing a local instance of jbei/ICE (optional), see furt
 <details>
   <summary>Data import from another GMOCU instance</summary>
   <a name="data_import"></a>
-  <video src='https://github.com/beyerh/gmocu/assets/116307465/7171ce65-0ee8-4ea9-8bbf-aebfcbd61ea8.mp4' />
+  <video src='https://github.com/beyerh/gmocu/assets/116307465/9a4d021a-7b93-4ed8-8109-c224b9d83e65.mp4' />
 </details>
 
 <details>
   <summary>Data entry</summary>
   <a name="data_entry"></a>
-  <video src='https://github.com/beyerh/gmocu/assets/116307465/c022704b-47cb-4c69-a892-791f13cb5381.mp4' />
+  <video src='https://github.com/beyerh/gmocu/assets/116307465/b47e93e0-5489-436e-b910-f76869f087f6.mp4' />
 </details>
 
 <details>
   <summary>Configure jbei/ICE and upload part entries</summary>
   <a name="jbei-ice"></a>
-  <video src='https://github.com/beyerh/gmocu/assets/116307465/8a8ffbf8-f618-48ad-8e87-d67376c2a97a.mp4' />
+  <video src='https://github.com/beyerh/gmocu/assets/116307465/adf313aa-736c-4698-88ea-4c3eb4ac90cd.mp4' />
 </details>
 
 <details>
   <summary>Generating reports and retrieving attachments</summary>
   <a name="reports"></a>
-  <video src='https://github.com/beyerh/gmocu/assets/116307465/bac3958c-139a-46d1-895c-27f43a183c25.mp4' />
+  <video src='https://github.com/beyerh/gmocu/assets/116307465/b4ae97b5-766c-478f-8a80-5aa91aa9da01.mp4' />
 </details>
 
 ### Settings
