@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.3, 2023-08-21'
+version  = 'gmocu-0.3, 2023-08-28'
 database = 'gmocu.db'
 
 # TODO:
@@ -190,8 +190,8 @@ tablayout_GMO = [
     [sg.Button('Run', key=f'-CHECKORGANISMS-'),] + [sg.Text('Check Organisms glossary completeness')], 
     [sg.Button('Run', key=f'-CHECKPLASMIDS-'),] + [sg.Text('Check for plasmid duplications and completeness')],
     [sg.Text('')],
-    [sg.Text('jbei/ICE')], 
-    [sg.Button('Run', key=f'-ICE-')] + [sg.Text('Upload/update all plasmid information and gb files to jbei/ICE')] + [sg.CB('Only new plasmids', default=True, k='-ONLYNEW-')],
+    [sg.Text('JBEI/ice')], 
+    [sg.Button('Run', key=f'-ICE-')] + [sg.Text('Upload/update all plasmid information and gb files to JBEI/ice')] + [sg.CB('Only new plasmids', default=True, k='-ONLYNEW-')],
     [sg.Text('')],
     [sg.Text('GMO')], 
     [sg.Button('Run', key=f'-PLASMIDLIST-'),] + [sg.Text('Generate plasmid list')],
@@ -244,7 +244,7 @@ tablayout_Settings = [
     ss.record('Settings.initials',label='Initials:', size=(62,10)),
     ss.record('Settings.email',label='Email:', size=(62,10)),
     ss.record('Settings.institution',label='GMO institute:', size=(62,10)),
-    ss.record('Settings.ice',label='jbei/ICE API:', element=sg.Combo, size=(56,10)),
+    ss.record('Settings.ice',label='JBEI/ice API:', element=sg.Combo, size=(56,10)),
     ss.record('Settings.gdrive_glossary',label='Google Sheet ID:', size=(62,10)),
     [sg.Text("Style*:                   ")] + [sg.Col([[sg.Combo(['Reddit', 'DarkBlack', 'Black', 'BlueMono', 'BrownBlue', 'DarkBlue', 'LightBlue', 'LightGrey6'], default_value=sg.user_settings_get_entry('-THEME-', 'Reddit'), size=(60,10), enable_events=True, key='-SETSTYLE-')]], vertical_alignment='t')],
     ss.record('Settings.style',no_label=True, size=(29,10)),
