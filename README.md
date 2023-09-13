@@ -63,17 +63,17 @@ For instructions on installing a local instance of jbei/ICE (optional), see furt
 
 ### Glossaries
 
-The ```Nucleic acids``` and ```Organisms``` glossaries can be imported and exported from and to ```*.xlsx``` files in the respective tabs. Another convenient and recommended way to manage the glossaries is to uplad the the ```GDrive_glossary.xlsx``` file to an [Google Drive](https://www.google.com/drive/) account, make the access public (Share --> Anyone with the link --> Set access rights to 'Editor' or 'Viewer'), and set the Google Sheets ID in the Settings tab (see section Settings). Entries can now be imported using the button ```Add entries from Google Sheet which not yet exist```. This approach allows a convinient collection of `Nuclaic acid` and `Organism` definitions in teams. Please do not modify the names of headers and sheets. See the [video tutorial](#getting_started).
+The ```Nucleic acids``` and ```Organisms``` glossaries can be imported and exported from and to ```*.xlsx``` files in the respective tabs. Another convenient and recommended way to manage the glossaries is to uplad the the ```GDrive_glossary.xlsx``` file to an [Google Drive](https://www.google.com/drive/) account, make the access public (Share --> Anyone with the link --> Set access rights to 'Editor' or 'Viewer'), and set the Google Sheets ID in the Settings tab (see section Settings). Entries can now be imported using the button ```Add entries from Google Sheet which not yet exist```. This approach allows a convinient collection of `Nucleic acid` and `Organism` definitions in teams. Please do not modify the names of headers and sheets. See the [video tutorial](#getting_started).
 
 ### Plasmid data
 
-Enter plasmid data and GMOs in the ```Plasmid data``` tab. There are also functions for uploading Genebank plasmid maps and associated data. The plasmid maps will be added to jbei/ICE on upload. There are several convenience functions for adding GMO-relevant Cassettes and GMO entries. Please import or enter ```Nucleic acids``` and ```Organisms``` glossaries and fill in all ```Settings``` before starting to add plasmid data. See [video tutorial](#data_entry).
+Enter plasmid data and GMOs in the ```Plasmid data``` tab. There are also functions for uploading Genebank plasmid maps and associated data. The plasmid maps will be added to jbei/ICE on upload. There are several convenient functions for adding GMO-relevant cassettes and GMO entries. Please import or enter ```Nucleic acids``` and ```Organisms``` glossaries and fill in all ```Settings``` before starting to add plasmid data. See [video tutorial](#data_entry).
 
 ### GMO and Maintainance
 
 #### Maintenance
 
-Check for completness of the glossaries and for duplicates of plasmid entries.
+Check for completeness of the glossaries and for duplicates of plasmid entries.
 
 #### jbei/ICE
 
@@ -95,9 +95,9 @@ To backup the database it suffices to copy the ```gmocu.db``` SQLite database fi
 
 The data stored in tables within the `gmocu.db` file can be accessed by software such as [DB Browser for SQLite](https://sqlitebrowser.org/). While we generally recommend to refrain from manual editing, it might by required in particular cases.
 
-### Link to the public regestry jbei/ICE database
+### Link to the public registry jbei/ICE database
 
-Make a free account at the [JBEI public regestry](https://public-registry.jbei.org/). Generate an access token in the account settings and add it in the GMOCU settings tab. Note that you may not be able to delete entries again from the registry. Alternatively, install a local jbei/ICE instance (recommended, [see below](###video-tutorials)).
+Make a free account at the [JBEI public registry](https://public-registry.jbei.org/). Generate an access token in the account settings and add it in the GMOCU settings tab. Note that you may not be able to delete entries again from the registry. Alternatively, install a local jbei/ICE instance (recommended, [see below](###video-tutorials)).
 
 ### Hidden settings
 
@@ -124,7 +124,7 @@ In order to reset the OS-dependend automated setting of the font size and scalin
   cp gmocu/docker-compose.yml ice/
   cd ice
   ```
-- Eiter enter the static IP address set above into the docker-compose.yml file:
+- Either enter the static IP address set above into the docker-compose.yml file:
   
   ```yaml
   134.99.70.14:9999:8080
@@ -148,7 +148,7 @@ In order to reset the OS-dependend automated setting of the font size and scalin
 
 Install [docker-vackup](https://github.com/BretFisher/docker-vackup).
 
-Script the following commands and execute them e.g. daily.Incude the tarballs into your regular backup solution:
+Script the following commands and execute them e.g. daily. Incude the tarballs into your regular backup solution:
 
 ```bash
 cd ~/ &&
