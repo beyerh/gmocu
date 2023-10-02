@@ -33,7 +33,7 @@ For instructions on installing a local instance of JBEI/ice (optional), see furt
 <details>
   <summary>Data entry</summary>
   <a name="data-entry"></a>
-  <video src='https://github.com/beyerh/gmocu/assets/116307465/b47e93e0-5489-436e-b910-f76869f087f6.mp4' />
+  <video src='https://github.com/beyerh/gmocu/assets/116307465/ffd65faf-d73d-4b53-9378-3890d2d044a9.mp4' />
 </details>
 
 <details>
@@ -45,7 +45,7 @@ For instructions on installing a local instance of JBEI/ice (optional), see furt
 <details>
   <summary>Generating reports and retrieving attachments</summary>
   <a name="reports"></a>
-  <video src='https://github.com/beyerh/gmocu/assets/116307465/b4ae97b5-766c-478f-8a80-5aa91aa9da01.mp4' />
+  <video src='https://github.com/beyerh/gmocu/assets/116307465/80bc62a6-2b00-4430-bf76-9467df6d2370.mp4' />
 </details>
 
 ### Settings

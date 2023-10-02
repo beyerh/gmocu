@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.3, 2023-08-28'
+version  = 'gmocu-0.3, 2023-10-06'
 database = 'gmocu.db'
 
 # TODO:
@@ -481,7 +481,7 @@ def add_to_organisms(wb):
     connection.close()
     db['Organisms'].requery()
 
-def generate_formblatt():
+def generate_formblatt(lang):
 
     try:
 
@@ -563,6 +563,9 @@ def generate_formblatt():
             
             #fZ_data = fZ_data.append(row, ignore_index=True) # Future warning
             fZ_data = pd.concat([fZ_data, pd.DataFrame.from_records([row])], ignore_index=True)
+
+        if lang == 'en':
+            fZ_data.columns = ['No', 'Donor designation', 'Donor RG', 'Recipient designation', 'Recipient RG', 'Source vector designation', 'Transferred nucleic acid designation', 'Transferred nucleic acid risk potential', 'GMO name', 'GMO RG', 'GMO approval', 'GMO generated', 'GMO disposal', 'Entry date']
             
         return(fZ_data)
 
@@ -592,7 +595,7 @@ def generate_plasmidlist():
         status          = status_values['value'][plasmid['status']-1]
         date            = plasmid['date']
 
-        row = {'Nr.':no,'Plasmid name':name,'Alias':alias,'Clone':clone,'Original vector':original_vector,'Purpose':purpose,'Cloning summary':summary,'Status':status,'Entry date':date}
+        row = {'No.':no,'Plasmid name':name,'Alias':alias,'Clone':clone,'Original vector':original_vector,'Purpose':purpose,'Cloning summary':summary,'Status':status,'Entry date':date}
         
         pL_data = pd.concat([pL_data, pd.DataFrame.from_records([row])], ignore_index=True)
         
@@ -959,7 +962,7 @@ def check_features():
         used_features = pd.read_sql_query("SELECT content FROM Cassettes ", connection)
         used_features = list(used_features['content'])
         # remove variants in []
-        used_features = [re.sub('[\[].*?[\]]', '', feature) for feature in used_features] ## TODO: fix also in generate_formabaltt
+        used_features = [re.sub('[\[].*?[\]]', '', feature) for feature in used_features]
         used_features = '-'.join(used_features).split('-')
         connection.close()
         comparison = np.setdiff1d(used_features, glossay_features) # yields the elements in `used_features` that are NOT in `glossay_features`
@@ -1660,7 +1663,12 @@ while True:
         features_check = check_features()
         organisms_check = check_organisms()
         if features_check[0] == True and organisms_check[0] == True:
-            formblatt = generate_formblatt()
+            event, values = sg.Window('Choose', [[sg.T('Choose a language')],[sg.LBox(['de','en'],size=(10,3))],[sg.OK()]]).read(close=True)
+            if len(values[0]) > 0:
+                lang = values[0][0]
+            else:
+                lang = 'de'
+            formblatt = generate_formblatt(lang)
             today = date.today()
             target = 'Downloads/Formblatt-Z' + '_' + user_name + '_' + str(today.strftime("%Y-%m-%d")) + '.xlsx'
             
