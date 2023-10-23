@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-version  = 'gmocu-0.3, 2023-10-06'
+appname  = 'GMOCU'
+version  = 'gmocu-0.4, 2023-10-20'
 database = 'gmocu.db'
 
 # TODO:
@@ -16,6 +17,8 @@ import numpy as np
 import logging
 import re
 import icebreaker
+import shutil
+from pathlib import Path
 from datetime import date
 logger=logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)               # <=== You can set the logging level here (NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL)
@@ -30,8 +33,19 @@ if getattr(sys, 'frozen', False):
     os.chdir(application_path)
 logging.debug('CWD: ' + os.getcwd())
 
+# set appdir path
+user_data = os.sep.join([str(Path.home()), 'GMOCU'])
+
+# copy template files if path does not yet exist
+try:
+    source = os.sep.join([os.getcwd(), 'Downloads', 'templates'])
+    target = os.sep.join([user_data, 'templates'])
+    templates_path = shutil.copytree(source, target, dirs_exist_ok=False)
+except FileExistsError:
+    pass
+
 # set settings path
-SETTINGS_PATH = '.'
+SETTINGS_PATH = user_data
 sg.user_settings_filename(path=SETTINGS_PATH)
 
 ### autocomplete ###
@@ -218,7 +232,7 @@ tablayout_Features = [
     [sg.Button('Add entries from Excel which not yet exist', key=f'-ADDEXCEL-')],
     [sg.Button('Add entries from Google Sheet which not yet exist', key=f'-ADDGOOGLE-')]+
     [sg.Button('!', key=f'-FEATUREINFO-')],
-    [sg.Text("Input file name: 'Downloads/templates/nucleic_acid_features.xlsx'")],
+    [sg.Text("Input file name: " + os.sep.join([user_data, 'templates', 'nucleic_acid_features.xlsx']))],
 ]
 
 ##### Organisms #####
@@ -234,7 +248,7 @@ tablayout_Organisms = [
     [sg.Button('Replace glossary with Excel file', key=f'-IMPEXCELORGA-')]+
     [sg.Button('Add entries from Excel which not yet exist', key=f'-ADDEXCELORGA-')],
     [sg.Button('Add entries from Google Sheet which not yet exist', key=f'-ADDGOOGLEORGA-')],
-    [sg.Text("Input file name: 'Downloads/templates/organisms.xlsx'")],
+    [sg.Text("Input file name: " + os.sep.join([user_data, 'templates', 'organisms.xlsx']))],
 ]
 
 ##### Settings #####
@@ -283,6 +297,11 @@ win['Plasmids.genebank'].update(visible=False)
 win['Settings.style'].update(visible=False)
 
 sql_script ='gmocu.sql'
+
+# update database path for use with appdirs
+database = os.sep.join([user_data, database])
+
+# generate database
 db=ss.Database(database, win,  sql_script=sql_script) #<=== Here is the magic!
 # Note:  sql_script is only run if *.db does not exist!  This has the effect of creating a new blank
 # database as defined by the sql_script file if the database does not yet exist, otherwise it will use the database!
@@ -428,13 +447,13 @@ def insertBLOB(plasmidId, file, filename):
         if connection:
             connection.close()
 
-def readBlobData(attId, attName):
+def readBlobData(attId, attName, path):
     try:
         connection = sqlite3.connect(database)
         cursor = connection.cursor()
 
-        path = "Downloads/"
-        with open(path + attName, "wb") as output_file:
+        path = path
+        with open(os.sep.join([path, attName]), "wb") as output_file:
             cursor.execute("SELECT file FROM Attachments WHERE attach_id = ?", (attId,))
             ablob = cursor.fetchall()
             #sg.popup("ablob ", len(ablob))
@@ -821,7 +840,7 @@ def import_data():
             name = 'gmocu_backup_{}.db'.format(str(date.today().strftime("%Y-%m-%d")))
             backup = sg.popup_yes_no('Shall we make a backup of the current database in the Download folder as {}'.format(name))
             if backup == 'Yes':
-                path = 'Downloads/' + name
+                path = os.sep.join([user_data, name])
 
                 def progress(status, remaining, total):
                     print(f'Copied {total-remaining} of {total} pages...')
@@ -1265,13 +1284,13 @@ while True:
     ### File download ###
     elif event == '-down_gb-':
         try:
-            download_path = 'Downloads/'
+            download_path = user_data
             name_file = db['Plasmids']['gb_name']
             if name_file != '':
-                file= open(download_path + name_file, 'r+')
+                file= open(os.sep.join([download_path, name_file]), 'r+')
         except FileNotFoundError:
             if name_file != '':
-                file= open(download_path + name_file, 'w+')
+                file= open(os.sep.join([download_path, name_file]), 'w+')
         except IsADirectoryError:
             sg.popup("There is no Genebank file to download.")
         except Exception as e:
@@ -1286,7 +1305,7 @@ while True:
         try:
             att_id = db['Attachments']['attach_id']
             att_name = db['Attachments']['Filename']
-            readBlobData(att_id, att_name)
+            readBlobData(att_id, att_name, user_data)
         except Exception as e:
             sg.popup(e)
 
@@ -1355,12 +1374,12 @@ while True:
 ### Features ###
     elif event == '-ALLEXCEL-':
         connection = sqlite3.connect(database)
-        pd.read_sql_query('SELECT * FROM Features', connection).to_excel('Downloads/ALL_nucleic_acid_features.xlsx', index=False, engine='xlsxwriter')
+        pd.read_sql_query('SELECT * FROM Features', connection).to_excel(os.sep.join([user_data, 'ALL_nucleic_acid_features.xlsx']), index=False, engine='xlsxwriter')
         connection.close()
         sg.popup('Done.')
     elif event == '-ALLEXCELORGA-':
         connection = sqlite3.connect(database)
-        pd.read_sql_query('SELECT * FROM Organisms', connection).to_excel('Downloads/ALL_organisms.xlsx', index=False, engine='xlsxwriter')
+        pd.read_sql_query('SELECT * FROM Organisms', connection).to_excel(os.sep.join([user_data, 'ALL_organisms.xlsx']), index=False, engine='xlsxwriter')
         connection.close()
         sg.popup('Done.')
     elif event == '-USEDEXCEL-':
@@ -1375,7 +1394,7 @@ while True:
             cursor.close()
 
             today = date.today()
-            target = 'Downloads/USED_nucleic_acid_features' + '_' + user_name + '_' + str(today.strftime("%Y-%m-%d")) + '.xlsx'
+            target = os.sep.join([user_data, 'USED_nucleic_acid_features' + '_' + user_name + '_' + str(today.strftime("%Y-%m-%d")) + '.xlsx'])
             writer = pd.ExcelWriter(target, engine='xlsxwriter')
             # also drop id column here:
             pd.read_sql_query('SELECT annotation, alias, risk, organism FROM Features WHERE annotation IN {}'.format(str(tuple(lst))), connection).to_excel(writer, sheet_name='Sheet1', index=False, startrow=0)
@@ -1442,7 +1461,7 @@ while True:
             lst5 = lst3 + lst4
 
             today = date.today()
-            target = 'Downloads/USED_organisms' + '_' + user_name + '_' + str(today.strftime("%Y-%m-%d")) + '.xlsx'
+            target = os.sep.join([user_data, 'USED_organisms' + '_' + user_name + '_' + str(today.strftime("%Y-%m-%d")) + '.xlsx'])
             writer = pd.ExcelWriter(target, engine='xlsxwriter')
 
             pd.read_sql_query('SELECT full_name, short_name, RG FROM Organisms WHERE short_name IN {}'.format(str(tuple(lst5))), connection).to_excel(writer, sheet_name='Sheet1', index=False, startrow=0)
@@ -1478,7 +1497,7 @@ while True:
 
     elif event == '-IMPEXCEL-':
         try:
-            wb = pd.read_excel('Downloads/templates/nucleic_acid_features.xlsx',sheet_name = 0)
+            wb = pd.read_excel(os.sep.join([user_data, 'templates', 'nucleic_acid_features.xlsx']), sheet_name = 0)
             connection = sqlite3.connect(database)
             cursor = connection.cursor()
             cursor.execute("DELETE FROM Features")
@@ -1499,18 +1518,18 @@ while True:
             db['Features'].requery()
             choices = autocomp()
         except FileNotFoundError:
-            sg.popup('File Downloads/templates/nucleic_acid_features.xlsx does not exist.')
+            sg.popup("File " + os.sep.join([user_data, 'templates', 'nucleic_acid_features.xlsx']) + " does not exist. You might have to rename it.")
         else:
-            source_dir = 'Downloads/templates/'
+            source_dir = os.sep.join([user_data, 'templates'])
             try:
                 os.unlink(os.path.join(source_dir, "nucleic_acid_features_imported.xlsx"))
             except OSError:
                 pass
             os.rename(os.path.join(source_dir, 'nucleic_acid_features.xlsx'), os.path.join(source_dir, "nucleic_acid_features_imported.xlsx"))
-            sg.popup('Downloads/templates/nucleic_acid_features.xlsx was renamed to nucleic_acid_features_imported.xlsx')
+            sg.popup('nucleic_acid_features.xlsx was renamed to nucleic_acid_features_imported.xlsx')
     elif event == '-IMPEXCELORGA-':
         try:
-            wb = pd.read_excel('Downloads/templates/organisms.xlsx',sheet_name = 0)
+            wb = pd.read_excel(os.sep.join([user_data, 'templates', 'organisms.xlsx']), sheet_name = 0)
             connection = sqlite3.connect(database)
             cursor = connection.cursor()
             cursor.execute("DELETE FROM Organisms")
@@ -1525,32 +1544,32 @@ while True:
             win['-FEATURECOMBO-'].Update(values = orga_selection)
             win['-SETSELORGA-'].Update(values = orga_selection)
         except FileNotFoundError:
-            sg.popup('File Downloads/templates/organisms.xlsx does not exist.')
+            sg.popup("File " + os.sep.join([user_data, 'templates', 'organisms.xlsx']) + " does not exist. You might have to rename it.")
         else:
-            source_dir = 'Downloads/templates/'
+            source_dir = os.sep.join([user_data, 'templates'])
             try:
-                os.unlink(os.path.join(source_dir, "organisms_imported.xlsx"))
+                os.unlink(os.path.join(source_dir, 'organisms_imported.xlsx'))
             except OSError:
                 pass
-            os.rename(os.path.join(source_dir, 'organisms.xlsx'), os.path.join(source_dir, "organisms_imported.xlsx"))
-            sg.popup('File Downloads/templates/organisms.xlsx was renamed to organisms_imported.xlsx')
+            os.rename(os.path.join(source_dir, 'organisms.xlsx'), os.path.join(source_dir, 'organisms_imported.xlsx'))
+            sg.popup('File organisms.xlsx was renamed to organisms_imported.xlsx')
 
     elif event == '-ADDEXCEL-':
         #TODO: file browse
         try:
-            wb = pd.read_excel('Downloads/templates/nucleic_acid_features.xlsx',sheet_name = 0)
+            wb = pd.read_excel(os.sep.join([user_data, 'templates', 'nucleic_acid_features.xlsx']), sheet_name = 0)
             add_to_features(wb)
             choices = autocomp()
         except FileNotFoundError:
-            sg.popup('File Downloads/templates/nucleic_acid_features.xlsx does not exist.')
+            sg.popup("File " + os.sep.join([user_data, 'templates', 'nucleic_acid_features.xlsx']) + " does not exist. You might have to rename it.")
         else:
-            source_dir = 'Downloads/templates/'
+            source_dir = os.sep.join([user_data, 'templates'])
             try:
-                os.unlink(os.path.join(source_dir, "nucleic_acid_features_imported.xlsx"))
+                os.unlink(os.path.join(source_dir, 'nucleic_acid_features_imported.xlsx'))
             except OSError:
                 pass
             os.rename(os.path.join(source_dir, 'nucleic_acid_features.xlsx'), os.path.join(source_dir, "nucleic_acid_features_imported.xlsx"))
-            sg.popup('File Downloads/templates/nucleic_acid_features.xlsx was renamed to nucleic_acid_features_imported.xlsx')
+            sg.popup('File nucleic_acid_features.xlsx was renamed to nucleic_acid_features_imported.xlsx')
 
     elif event == '-ADDGOOGLE-':
         try:
@@ -1568,23 +1587,23 @@ while True:
     elif event == '-ADDEXCELORGA-': 
         #TODO: file browse
         try:
-            wb = pd.read_excel('Downloads/templates/organisms.xlsx',sheet_name = 0)
+            wb = pd.read_excel(os.sep.join([user_data, 'templates', 'organisms.xlsx']), sheet_name = 0)
             add_to_organisms(wb)
             orga_selection = select_orga()
             win['-FEATURECOMBO-'].Update(values = orga_selection)
             win['-SETSELORGA-'].Update(values = orga_selection)
         except FileNotFoundError:
-            sg.popup('File Downloads/templates/organisms.xlsx does not exist.')
+            sg.popup("File " + os.sep.join([user_data, 'templates', 'organisms.xlsx']) + " does not exist. You might have to rename it.")
         except Exception as e:
             sg.popup(e)
         else:
-            source_dir = 'Downloads/templates/'
+            source_dir = os.sep.join([user_data, 'templates'])
             try:
-                os.unlink(os.path.join(source_dir, "organisms_imported.xlsx"))
+                os.unlink(os.path.join(source_dir, 'organisms_imported.xlsx'))
             except OSError:
                 pass
-            os.rename(os.path.join(source_dir, 'organisms.xlsx'), os.path.join(source_dir, "organisms_imported.xlsx"))
-            sg.popup('File Downloads/templates/organisms.xlsx was renamed to organisms_imported.xlsx')
+            os.rename(os.path.join(source_dir, 'organisms.xlsx'), os.path.join(source_dir, 'organisms_imported.xlsx'))
+            sg.popup('File organisms.xlsx was renamed to organisms_imported.xlsx')
 
     elif event == '-ADDGOOGLEORGA-':
         try:
@@ -1670,7 +1689,7 @@ while True:
                 lang = 'de'
             formblatt = generate_formblatt(lang)
             today = date.today()
-            target = 'Downloads/Formblatt-Z' + '_' + user_name + '_' + str(today.strftime("%Y-%m-%d")) + '.xlsx'
+            target = os.sep.join([user_data, 'Formblatt-Z' + '_' + user_name + '_' + str(today.strftime("%Y-%m-%d")) + '.xlsx'])
             
             #unformatted
             #formblatt.to_excel('Downloads/Formblatt-Z' + '_' + user_name + '_' + str(today.strftime("%Y-%m-%d")) + '_unformatted.xlsx', index=False)
@@ -1720,7 +1739,7 @@ while True:
     elif event == '-PLASMIDLIST-':
         plasmidlist = generate_plasmidlist()
         today = date.today()
-        target = 'Downloads/Plasmidlist' + '_' + user_name + '_' + str(today.strftime("%Y-%m-%d")) + '.xlsx'
+        target = os.sep.join([user_data, 'Plasmidlist' + '_' + user_name + '_' + str(today.strftime("%Y-%m-%d")) + '.xlsx'])
         writer = pd.ExcelWriter(target, engine='xlsxwriter')
         plasmidlist.to_excel(writer, sheet_name='Sheet1', index=False)
         workbook  = writer.book

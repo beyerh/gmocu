@@ -62,6 +62,19 @@ For instructions on installing a local instance of JBEI/ice (optional), see furt
 | Target organisms | Define target organisms (working organisms for GMO generation). The organisms must first be present in the organism glossary.                                                                                                                                                                                                                                                      |
 | Fav. organisms   | Select some of the target organisms for generating several GMOs with one click using the ':)' convenience function. All organisms in ```Fav. organisms``` must be present in ```Target organisms```!                                                                                                                                                                               |
 
+### Where is all data stored?
+
+All files written by GMOCU (including various exports and the ```gmocu.db``` SQLite database file) are located in the [GMOCU user data folder](#where-is-all-data-stored), residing in your home directory. Depending on the operating system, the location is:
+
+macOS:
+`/Users/<user>/GMOCU`
+
+Windows:
+`C:\Users\<user>\GMOCU`
+
+Linux:
+`/home/<user>/GMOCU`
+
 ### Glossaries
 
 The ```Nucleic acids``` and ```Organisms``` glossaries can be imported and exported from and to ```*.xlsx``` files in the respective tabs. Another convenient and recommended way to manage the glossaries is to uplad the the ```GDrive_glossary.xlsx``` file to an [Google Drive](https://www.google.com/drive/) account, make the access public (Share --> Anyone with the link --> Set access rights to 'Editor' or 'Viewer'), and set the Google Sheets ID in the Settings tab (see section Settings). Entries can now be imported using the button ```Add entries from Google Sheet which not yet exist```. This approach allows a convinient collection of `Nucleic acid` and `Organism` definitions in teams. Please do not modify the names of headers and sheets. See the [video tutorial](#getting_started).
@@ -72,10 +85,9 @@ Enter plasmid data and GMOs in the ```Plasmid data``` tab. There are also functi
 
 ### Example data
 
-The ```example``` folder provides a selected set of `Nuclaic acid` and `Organism` definitions (`GDrive_glossary.xlsx`) which can serve as starting point for developing an inventory. The file can be uploaded to Google Drive for collaborative editing and import (see [Glossaries](#glossaries)). Similar lists are enclosed in the ``Downloads/templates`` folder of the GMOCU project directory (`GMOCU.app/Contents/MacOS` for macOS).
+The ```example``` folder provides a selected set of `Nuclaic acid` and `Organism` definitions (`GDrive_glossary.xlsx`) which can serve as starting point for developing an inventory. The file can be uploaded to Google Drive for collaborative editing and import (see [Glossaries](#glossaries)). Similar lists are enclosed in the ``templates`` folder of the [GMOCU user data folder](#where-is-all-data-stored).
 
-The `example` folder further provides a ```gmocu.db``` file with testing data. The file can be copied into the GMOCU program directory. If no ```gmocu.db``` file exists, GMOCU will generate an empty database file on initial start.
-
+The `example` folder further provides a ```gmocu.db``` file with testing data. The file can be copied into the [GMOCU user data folder](#where-is-all-data-stored). If no ```gmocu.db``` file exists, GMOCU will generate an empty database file on initial start.
 
 ### GMO and Maintainance
 
@@ -89,7 +101,7 @@ Upload plasmid entries to JBEI/ice. Each upload will overwrite the information o
 
 #### GMO
 
-Generate a simple ```plasmid list``` or the ```Formblat Z``` required for the governmental regulations. Also export the ```Nucleic acids``` and ```Organisms``` in the respective tabs. The files will appear in the ```Downloads``` folder of the app directory (```GMOCU.app/Contents/Resources/Downloads``` for macOS or ```gmocu/Downloads``` for Windows).
+Generate a simple ```plasmid list``` or the ```Formblat Z``` required for the governmental regulations. Also export the ```Nucleic acids``` and ```Organisms``` in the respective tabs. The files will appear in the [GMOCU user data folder](#where-is-all-data-stored).
 
 #### Data import
 
@@ -97,7 +109,7 @@ Import data from another ```gmocu.db``` file together with the associated nuclei
 
 ### Backup
 
-To backup the database it suffices to copy the ```gmocu.db``` SQLite database file located under ```GMOCU.app/Contents/MacOS``` for macOS releases or in the ```gmocu``` folder for Windows/Linux releases. The file contains all relevant data. It is possible to store the ```gmocu.db``` file at a location which is synced via a cloud service such as Dropbox. Then, replace the file in the application folder with a softlink to that file. That way, one can work with the same database from different computers. Regular backup recommended.
+To backup the database it suffices to copy the ```gmocu.db``` SQLite database file located in the [GMOCU user data directory](#where-is-all-data-stored). The file contains all relevant data. It is possible to store the ```gmocu.db``` file at a location which is synced via a cloud service such as Dropbox. Then, replace the file in the application folder with a softlink to that file. That way, one can work with the same database from different computers. Regular backup recommended.
 
 ### Manual data editing
 
@@ -136,7 +148,7 @@ In order to reset the OS-dependent automated setting of the font size and scalin
   cp gmocu/docker-compose.yml ice/
   cd ice
   ```
-  
+
 - Either enter the static IP address set above into the docker-compose.yml file:
   
   ```yaml
@@ -192,8 +204,8 @@ Set up the developmental ```gmocu``` environment:
 conda create --name gmocu python=3.9
 conda activate gmocu
 
-conda install PySimpleGUI pandas Pillow xlsxwriter openpyxl
-pip install icebreaker pyinstaller
+conda install PySimpleGUI pandas Pillow xlsxwriter openpyxl python-levenshtein
+pip install icebreaker pyinstaller==5.13.2
 ```
 
 Deploy executable using Pyinstaller:
