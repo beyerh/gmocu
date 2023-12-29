@@ -1,6 +1,6 @@
 # GMOCU
 
-User-oriented plasmid database with GMO documentation in accordance with the Germany GenTAufzV regulation (*Formblatt-Z*).
+User-oriented plasmid database with GMO documentation in accordance with the German GenTAufzV regulation (*Formblatt-Z*).
 
 <img src="./img/navigation.gif" width=30% height=30%>
 
@@ -8,7 +8,7 @@ User-oriented plasmid database with GMO documentation in accordance with the Ger
 
 ### Download
 
-Download executale GMOCU packages for macOS, Windows, and Linux from the [Releases](https://github.com/beyerh/gmocu/releases) page.
+Download executable GMOCU packages for macOS, Windows, and Linux from the [Releases](https://github.com/beyerh/gmocu/releases) page.
 
 Alternatively you may execute the gmocu.py script file (requires intallation of dependencies).
 
@@ -77,15 +77,15 @@ Linux:
 
 ### Glossaries
 
-The ```Nucleic acids``` and ```Organisms``` glossaries can be imported and exported from and to ```*.xlsx``` files in the respective tabs. Another convenient and recommended way to manage the glossaries is to uplad the the ```GDrive_glossary.xlsx``` file to an [Google Drive](https://www.google.com/drive/) account, make the access public (Share --> Anyone with the link --> Set access rights to 'Editor' or 'Viewer'), and set the Google Sheets ID in the Settings tab (see section Settings). Entries can now be imported using the button ```Add entries from Google Sheet which not yet exist```. This approach allows a convinient collection of `Nucleic acid` and `Organism` definitions in teams. Please do not modify the names of headers and sheets. See the [video tutorial](#getting_started).
+The ```Nucleic acids``` and ```Organisms``` glossaries can be imported and exported from and to ```*.xlsx``` files in the respective tabs. Another convenient and recommended way to manage the glossaries is to upload the ```GDrive_glossary.xlsx``` file to a [Google Drive](https://www.google.com/drive/) account, make the access public (Share --> Anyone with the link --> Set access rights to 'Editor' or 'Viewer'), and set the Google Sheets ID in the Settings tab (see section Settings). Entries can now be imported using the button ```Add entries from Google Sheet which not yet exist```. This approach allows a convenient collection of `Nucleic acid` and `Organism` definitions in teams. Please do not modify the names of headers and sheets. See the [video tutorial](#getting_started).
 
 ### Plasmid data
 
-Enter plasmid data and GMOs in the ```Plasmid data``` tab. There are also functions for uploading Genebank plasmid maps and associated data. The plasmid maps will be added to jbei/ICE on upload. There are several convenient functions for adding GMO-relevant cassettes and GMO entries. Please import or enter ```Nucleic acids``` and ```Organisms``` glossaries and fill in all ```Settings``` before starting to add plasmid data. See [video tutorial](#data_entry).
+Enter plasmid data and GMOs in the ```Plasmid data``` tab. There are also functions for uploading Genebank plasmid maps and associated data. The plasmid maps will be added to JBEI/ice on upload. There are several convenient functions for adding GMO-relevant cassettes and GMO entries. Please import or enter ```Nucleic acids``` and ```Organisms``` glossaries and fill in all ```Settings``` before starting to add plasmid data. See [video tutorial](#data_entry).
 
 ### Example data
 
-The ```example``` folder provides a selected set of `Nuclaic acid` and `Organism` definitions (`GDrive_glossary.xlsx`) which can serve as starting point for developing an inventory. The file can be uploaded to Google Drive for collaborative editing and import (see [Glossaries](#glossaries)). Similar lists are enclosed in the ``templates`` folder of the [GMOCU user data folder](#where-is-all-data-stored).
+The ```example``` folder provides a selected set of `Nucleic acid` and `Organism` definitions (`GDrive_glossary.xlsx`) which can serve as a starting point for developing an inventory. The file can be uploaded to Google Drive for collaborative editing and import (see [Glossaries](#glossaries)). Similar lists are enclosed in the ``templates`` folder of the [GMOCU user data folder](#where-is-all-data-stored).
 
 The `example` folder further provides a ```gmocu.db``` file with testing data. The file can be copied into the [GMOCU user data folder](#where-is-all-data-stored). If no ```gmocu.db``` file exists, GMOCU will generate an empty database file on initial start.
 
@@ -97,11 +97,11 @@ Check for completeness of the glossaries and for duplicates of plasmid entries.
 
 #### JBEI/ice
 
-Upload plasmid entries to JBEI/ice. Each upload will overwrite the information on the server. When ```Only new plasmids``` is checked, GMOCU will only upload entries with plasmid names which do not yet exist in the respective folder on the ICE server. Another way to update the information of a single plasmid, e.g. after edit is by pressing the ```ICE``` button on the top right corner in the ```Plasmid data``` tab. See the [video tutorial](#jbei-ice).
+Upload plasmid entries to JBEI/ice. Each upload will overwrite the information on the server. When ```Only new plasmids``` is checked, GMOCU will only upload entries with plasmid names which do not yet exist in the respective folder on the ICE server. Another way to update the information of a single plasmid, e.g. after editing, is by pressing the ```ICE``` button in the top right corner in the ```Plasmid data``` tab. See the [video tutorial](#jbei-ice).
 
 #### GMO
 
-Generate a simple ```plasmid list``` or the ```Formblat Z``` required for the governmental regulations. Also export the ```Nucleic acids``` and ```Organisms``` in the respective tabs. The files will appear in the [GMOCU user data folder](#where-is-all-data-stored).
+Generate a simple ```plasmid list``` or the ```Formblatt Z``` required for the governmental regulations. Also export the ```Nucleic acids``` and ```Organisms``` in the respective tabs. The files will appear in the [GMOCU user data folder](#where-is-all-data-stored).
 
 #### Data import
 
@@ -113,11 +113,11 @@ To backup the database it suffices to copy the ```gmocu.db``` SQLite database fi
 
 ### Manual data editing
 
-The data stored in tables within the `gmocu.db` file can be accessed by software such as [DB Browser for SQLite](https://sqlitebrowser.org/). While we generally recommend to refrain from manual editing, it might by required in particular cases.
+The data stored in tables within the `gmocu.db` file can be accessed by software such as [DB Browser for SQLite](https://sqlitebrowser.org/). While we generally recommend to refrain from manual editing, it might be required in particular cases.
 
-### Link to the public regestry JBEI/ice database
+### Link to the public registry JBEI/ice database
 
-Make a free account at the [JBEI public regestry](https://public-registry.jbei.org/). Generate an access token in the account settings and add it in the GMOCU settings tab. Note that you may not be able to delete entries again from the registry. Alternatively, install a local JBEI/ice instance (recommended, [see below](#install-jbeiice-as-docker-container-locally-or-on-a-server)).
+Make a free account at the [JBEI public registry](https://public-registry.jbei.org/). Generate an access token in the account settings and add it in the GMOCU settings tab. Note that you may not be able to delete entries again from the registry. Alternatively, install a local JBEI/ice instance (recommended, [see below](#install-jbeiice-as-docker-container-locally-or-on-a-server)).
 
 ### Hidden settings
 
@@ -176,7 +176,7 @@ In order to reset the OS-dependent automated setting of the font size and scalin
 
 Install [docker-vackup](https://github.com/BretFisher/docker-vackup).
 
-Script the following commands and execute them e.g. daily. Incude the tarballs into your regular backup solution:
+Script the following commands and execute them e.g. daily. Include the tarballs into your regular backup solution:
 
 ```bash
 cd ~/ &&
