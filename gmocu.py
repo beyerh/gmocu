@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 appname  = 'GMOCU'
-version  = 'gmocu-0.4, 2023-10-20'
+version  = 'gmocu-0.4, 2023-12-27'
 database = 'gmocu.db'
 
 # TODO:
@@ -593,7 +593,7 @@ def generate_formblatt(lang):
 
 def generate_plasmidlist():
 
-    pL_data = pd.DataFrame({'Nr.':[],'Plasmid name':[],'Alias':[],'Clone':[],'Original vector':[],'Purpose':[],'Cloning summary':[],'Status':[],'Entry date':[]})
+    pL_data = pd.DataFrame({'No.':[],'Plasmid name':[],'Alias':[],'Clone':[],'Original vector':[],'Purpose':[],'Cloning summary':[],'Status':[],'Entry date':[]})
 
     # get all GMOs as dataframe
     connection = sqlite3.connect(database)

@@ -8,15 +8,21 @@ User-oriented plasmid database with GMO documentation in accordance with the Ger
 
 ### Download
 
-Download executable GMOCU packages for macOS, Windows, and Linux from the [Releases](https://github.com/beyerh/gmocu/releases) page.
+Download executable GMOCU packages for macOS, Windows, and Linux from the [Releases](https://github.com/beyerh/gmocu/releases) page. See [video tutorial](#software-installation).
 
-Alternatively you may execute the gmocu.py script file (requires intallation of dependencies).
+Alternatively, you may execute the ```gmocu.py``` script file containing the source code (requires installation of dependencies).
 
 For instructions on installing a local instance of JBEI/ice (optional), see further below.
 
 ## Usage
 
 ### Video tutorials
+
+<details>
+  <summary>Software download and installation</summary>
+  <a name="software-installation"></a>
+  <video src='https://github.com/beyerh/gmocu/assets/116307465/b80ad6e4-4eae-463d-b651-d45ecbe82d23.mp4' />
+</details>
 
 <details>
   <summary>Getting started and importing a glossary</summary>
@@ -45,7 +51,7 @@ For instructions on installing a local instance of JBEI/ice (optional), see furt
 <details>
   <summary>Generating reports and retrieving attachments</summary>
   <a name="reports"></a>
-  <video src='https://github.com/beyerh/gmocu/assets/116307465/80bc62a6-2b00-4430-bf76-9467df6d2370.mp4' />
+  <video src='https://github.com/beyerh/gmocu/assets/116307465/e5b35398-446f-4a21-b0af-7332ecc5a837.mp4' />
 </details>
 
 ### Settings
@@ -53,8 +59,8 @@ For instructions on installing a local instance of JBEI/ice (optional), see furt
 | Setting          | Description                                                                                                                                                                                                                                                                                                                                                                        |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Initials         | Define the user or project initials. Based on the entry, a folder on JBEI/ice will be generated into which plasmid entries will be uploaded. The initials should not and cannot be changed anymore at a later date.                                                                                                                                                                |
-| GMO institute    | Provide governmental information on the GMO facility (Az. and Anlage Nr.) which will appear on the Formblatt-Z.                                                                                                                                                                                                                                                                    |
-| JBEI/ice API     | Generate an API key for a shared JBEI/ice account either hosted locally or on the public server. Enter the key. Several accounts can be added in order to push plasmid data into multiple accounts if desired. See the [video tutorial](#getting-started).                                                                                                                         |
+| GMO institute    | Provides governmental information on the GMO facility (Az. and Anlage Nr.) which will appear on the Formblatt-Z.                                                                                                                                                                                                                                                                   |
+| JBEI/ice API     | Generate an API key for a shared JBEI/ice account hosted locally or on the public server. Enter the key. Several accounts can be added to push plasmid data into multiple accounts if desired. See the [video tutorial](#getting-started).                                                                                                                                         |
 | Google Sheet ID  | Google Sheet ID: Upload the glossary file ```GDrive_glossary.xlsx``` to a Google Drive account and make it public. Extract the identifier code from the link and enter. You can also test with this provided example link: ```https://docs.google.com/spreadsheets/d/1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18/edit#gid=1994557483```, Identifier: ```1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18``` |
 | Style            | Visual theme.                                                                                                                                                                                                                                                                                                                                                                      |
 | Duplicate GMOs   | When duplicating a selected plasmid, GMOs will also be copied, however, with the current date. (Default, false).                                                                                                                                                                                                                                                                   |
@@ -77,7 +83,7 @@ Linux:
 
 ### Glossaries
 
-The ```Nucleic acids``` and ```Organisms``` glossaries can be imported and exported from and to ```*.xlsx``` files in the respective tabs. Another convenient and recommended way to manage the glossaries is to upload the ```GDrive_glossary.xlsx``` file to a [Google Drive](https://www.google.com/drive/) account, make the access public (Share --> Anyone with the link --> Set access rights to 'Editor' or 'Viewer'), and set the Google Sheets ID in the Settings tab (see section Settings). Entries can now be imported using the button ```Add entries from Google Sheet which not yet exist```. This approach allows a convenient collection of `Nucleic acid` and `Organism` definitions in teams. Please do not modify the names of headers and sheets. See the [video tutorial](#getting_started).
+The ```Nucleic acids``` and ```Organisms``` glossaries can be imported and exported from and to ```*.xlsx``` files in the respective tabs. Another convenient and recommended way to manage the glossaries is to upload the ```GDrive_glossary.xlsx``` file to a [Google Drive](https://www.google.com/drive/) account, make the access public (Share --> Anyone with the link --> Set access rights to 'Editor' or 'Viewer'), and set the Google Sheets ID in the Settings tab (see section Settings). Entries can now be imported using the button ```Add entries from Google Sheets which not yet exist```. This approach allows a convenient collection of `Nucleic acid` and `Organism` definitions in teams. Please do not modify the names of headers and sheets. See the [video tutorial](#getting_started).
 
 ### Plasmid data
 
@@ -87,21 +93,21 @@ Enter plasmid data and GMOs in the ```Plasmid data``` tab. There are also functi
 
 The ```example``` folder provides a selected set of `Nucleic acid` and `Organism` definitions (`GDrive_glossary.xlsx`) which can serve as a starting point for developing an inventory. The file can be uploaded to Google Drive for collaborative editing and import (see [Glossaries](#glossaries)). Similar lists are enclosed in the ``templates`` folder of the [GMOCU user data folder](#where-is-all-data-stored).
 
-The `example` folder further provides a ```gmocu.db``` file with testing data. The file can be copied into the [GMOCU user data folder](#where-is-all-data-stored). If no ```gmocu.db``` file exists, GMOCU will generate an empty database file on initial start.
+The `example` folder further provides a ```gmocu.db``` file with testing data. The file can be copied into the [GMOCU user data folder](#where-is-all-data-stored). If no ```gmocu.db``` file exists, GMOCU will generate an empty database file on the initial start.
 
 ### GMO and Maintainance
 
 #### Maintenance
 
-Check for completeness of the glossaries and for duplicates of plasmid entries.
+Check for completeness of the glossaries and duplicates of plasmid entries.
 
 #### JBEI/ice
 
-Upload plasmid entries to JBEI/ice. Each upload will overwrite the information on the server. When ```Only new plasmids``` is checked, GMOCU will only upload entries with plasmid names which do not yet exist in the respective folder on the ICE server. Another way to update the information of a single plasmid, e.g. after editing, is by pressing the ```ICE``` button in the top right corner in the ```Plasmid data``` tab. See the [video tutorial](#jbei-ice).
+Upload plasmid entries to JBEI/ice. Each upload will overwrite the information on the server. When ```Only new plasmids``` is checked, GMOCU will only upload entries with plasmid names that do not yet exist in the respective folder on the ICE server. Another way to update the information of a single plasmid, e.g. after editing is by pressing the ```ICE``` button in the top right corner of the ```Plasmid data``` tab. See the [video tutorial](#jbei-ice).
 
 #### GMO
 
-Generate a simple ```plasmid list``` or the ```Formblatt Z``` required for the governmental regulations. Also export the ```Nucleic acids``` and ```Organisms``` in the respective tabs. The files will appear in the [GMOCU user data folder](#where-is-all-data-stored).
+Generate a simple ```Plasmid list``` or the ```Formblatt Z``` biosafety report required for governmental regulations. Also, export the ```Nucleic acids``` and ```Organisms``` in the respective tabs. The files will appear in the [GMOCU user data folder](#where-is-all-data-stored).
 
 #### Data import
 
@@ -109,11 +115,11 @@ Import data from another ```gmocu.db``` file together with the associated nuclei
 
 ### Backup
 
-To backup the database it suffices to copy the ```gmocu.db``` SQLite database file located in the [GMOCU user data directory](#where-is-all-data-stored). The file contains all relevant data. It is possible to store the ```gmocu.db``` file at a location which is synced via a cloud service such as Dropbox. Then, replace the file in the application folder with a softlink to that file. That way, one can work with the same database from different computers. Regular backup recommended.
+To backup the database it suffices to copy the ```gmocu.db``` SQLite database file located in the [GMOCU user data directory](#where-is-all-data-stored). The file contains all relevant data. It is possible to store the ```gmocu.db``` file at a location which is synced via a cloud service such as Dropbox. Then, replace the file in the application folder with a soft link to that file. That way, one can work with the same database from different computers. Regular backup is recommended.
 
 ### Manual data editing
 
-The data stored in tables within the `gmocu.db` file can be accessed by software such as [DB Browser for SQLite](https://sqlitebrowser.org/). While we generally recommend to refrain from manual editing, it might be required in particular cases.
+The data stored in tables within the `gmocu.db` file can be accessed by software such as [DB Browser for SQLite](https://sqlitebrowser.org/). While we generally recommend refraining from manual editing, it might be required in particular cases.
 
 ### Link to the public registry JBEI/ice database
 
@@ -123,7 +129,7 @@ Make a free account at the [JBEI public registry](https://public-registry.jbei.o
 
 ### Specify scaling and font size and reset OS-dependent detection
 
-In the Settings tab, the fields for defining fontsize and scaling are inactivated (grayed out). Enable them by pressing the key combination ```Ctrl + e```. Now you can specify the values and save. Restart GMOCU.
+In the Settings tab, the fields for defining font size and scaling are inactivated (grayed out). Enable them by pressing the key combination ```Ctrl + e```. Now you can specify the values and save. Restart GMOCU.
 
 In order to reset the OS-dependent automated setting of the font size and scaling values, enter ```__``` (double underscore) into the fields and save. Close GMOCU and delete the file ```gmocu.json``` in the project directory. Restart GMOCU.
 
@@ -131,7 +137,7 @@ In order to reset the OS-dependent automated setting of the font size and scalin
 
 - For reference, see [the official description](https://github.com/JBEI/ice/tree/trunk/docker).
 
-- Install Docker Desktop, set startup after login in settings.
+- Install Docker Desktop, and set startup after login in settings.
 
 - Set static IP in Network Settings and change the computer name for network access via ```name.local```.
 
@@ -161,14 +167,14 @@ In order to reset the OS-dependent automated setting of the font size and scalin
   127.0.0.1:9999:8080
   ```
 
-- Install JBEI/ice from docker hub, create containers and launch:
+- Install JBEI/ice from the docker hub, create containers, and launch:
   
   ```bash
   docker pull jbei/ice
   docker-compose up
   ```
 
-- Call the address set above in a browser and login with "Administrator" as user and password.
+- Call the address set above in a browser and log in with "Administrator" as user and password.
 
 - Create a new user account and setup the access token to use in the GMOCU settings.
 
@@ -215,7 +221,17 @@ conda activate gmocu
 pyinstaller gmocu.spec
 ```
 
-The version numbers of the environment packages used for the deployment of GMOCU-0.3 are listed in the file ```GMOCU-0.3_env_packages.txt```.
+The version numbers of the environment packages used for the deployment of GMOCU-0.4 are listed in the file ```GMOCU-0.4_env_packages.txt```.
+
+### Modifying the information content of the generated reports
+
+Customized reports can be generated by modifying the respective functions in the ```gmocu.py``` file. Data can be sourced from the various tables and fields stored in the SQLite file ```gmocu.db```. For an overview, see the content of the file ```gmocu.sql```.
+
+For biosafety reports, the relevant function to modify is called ```generate_formblatt(lang)```. Here, under the section ```#pack data```, the content can be defined which subsequently has to be inserted into the pandas data frame at the end of the function.
+
+Plasmid lists can be modified within the function ```generate_plasmidlist()```, following the same concept as with biosafety reports.
+
+Formatting parameters such as column widths of the generated output ```*.xslx``` file can be defined in the ```while``` loop where the functions are called.
 
 ## Resources
 

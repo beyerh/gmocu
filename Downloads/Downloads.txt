@@ -1,4 +1,4 @@
-Since version GMOCU-04, all downloads will appear in the user data directory.
+Since version GMOCU-0.4, all downloads will appear in the user data directory.
 
 
 macOS:
