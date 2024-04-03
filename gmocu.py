@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
 appname  = 'GMOCU'
-version  = 'gmocu-0.4, 2023-12-27'
+version_no  = float(0.5)
+vdate    = '2024-04-02'
 database = 'gmocu.db'
 
 # TODO:
@@ -20,6 +21,7 @@ import icebreaker
 import shutil
 from pathlib import Path
 from datetime import date
+from fuzzywuzzy import process, fuzz
 logger=logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)               # <=== You can set the logging level here (NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL)
 
@@ -49,67 +51,19 @@ SETTINGS_PATH = user_data
 sg.user_settings_filename(path=SETTINGS_PATH)
 
 ### autocomplete ###
-input_width = 20
-num_items_to_show = 5
 orga_selection = []
 
 # PySimpleGUI standard font size
 os_font_size = 13
 os_scale_factor = 1
 
-# fix os-specific glitches
-headings=[' ID ','  Name  ','                     Alias                       ','  Status  ','G '] # Table column widths can be set by the spacing of the headings!
-features_headings = ['ID   ','   Annotation    ','                 Alias                 ','Risk ', 'Organism']
-organisms_headings = ['ID   ','               Full name                  ','      Short name     ','RG    ']
-spacer1 = '  '
-spacer2 = '          '
-spacer3 = '                   '
-spacer4 = ' '
-spacer5 = '                                '
-spacer6 = '     '
-spacer7 = '  '
-spacer8 = '                              '
-spacer9 = '                             '
-spacer10 = '                             '
-alias_length = 59
-
-if sys.platform == "win32":
-    headings=['ID',' Name ','            Alias            ','Status','G '] # Table column widths can be set by the spacing of the headings!
-    features_headings = ['ID ','Annotation','        Alias        ','Risk', 'Organism']
-    organisms_headings = ['ID','           Full name          ','Short name ','RG']
-    spacer1 = ''
-    spacer2 = '           '
-    spacer3 = '                    '
-    spacer4 = ''
-    spacer5 = '                           '
-    spacer6 = ' '
-    spacer7 = ''
-    spacer8 = '                              '
-    spacer9 = '                             '
-    spacer10 = '                             '
-    alias_length = 59
-
-elif sys.platform.startswith("linux"):  # could be "linux", "linux2", "linux3", ...
-    headings=['ID','     Name     ','                            Alias                           ','     Status     ',' G '] # Table column widths can be set by the spacing of the headings!
-    features_headings = ['ID ','     Annotation     ','                         Alias                       ','  Risk  ', '  Organism   ' ]
-    organisms_headings = ['ID','                               Full name                             ','    Short name    ','  RG  ']
-    spacer1 = ''
-    spacer2 = '         '
-    spacer3 = '                   '
-    spacer4 = ''
-    spacer5 = '                           '
-    spacer6 = ' '
-    spacer7 = ''
-    spacer8 = '                              '
-    spacer9 = '                             '
-    spacer10 = '                             '
-    alias_length = 57
-    os_font_size = 13
-    os_scale_factor = 1.6
-
 # PySimpleGUI layout code
 font_size = sg.user_settings_get_entry('-FONTSIZE-', os_font_size)
 scale_factor = sg.user_settings_get_entry('-SCALE-', os_scale_factor)
+if sys.platform == "win32":
+    horizontal_layout = sg.user_settings_get_entry('-HORIZONTAL-', 1)
+else:
+    horizontal_layout = sg.user_settings_get_entry('-HORIZONTAL-', 0)
 sg.set_options(font=("Helvetica", font_size))
 #sg.theme('DarkBlack')
 sg.theme(sg.user_settings_get_entry('-THEME-', 'Reddit'))  # set the theme
@@ -117,143 +71,248 @@ sg.theme(sg.user_settings_get_entry('-THEME-', 'Reddit'))  # set the theme
 img_base64 = b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAABeAAAAXgH42Q/5AAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAPtJREFUOI3tkjFKAwEQRd/fDZZCMCcQRFRCCi1SWdmksNDCC1jmAlmt0mRbsbDyAKKQQkstbAVtXG3EIwhpDRi/jcuuWTesvb+bYd5n+DOyTZl0+NzlEzteOymdKTNQL9kk0DUQYHccN28qGyhKFgl0h2l8t0YwaXvQepmeDQpw/3Ue6SoHA9RxeKkoqc800N5FyPv4DFgtrsUy0rn6t7XyDZZWjpE7BTjTFuOFox++aQY6eNoHTmfAmaxuehnZzic+V8kAPtLLiN7jdOJVNYJJu0agHdAQpeu5AeyWQEOkt6wMtwt/oChZR7r/Fbc3HDcf8q3CH/xV/wbwBe0pVw+ecPjyAAAAAElFTkSuQmCC'
 img2_base64 = b'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAUCAYAAABSx2cSAAAACXBIWXMAAAJhAAACYQHBMFX6AAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAOhJREFUOI3tz79OwlAUx/HvJTe1gW5iOqohcZHJuLv6Gs6uLvgADsbFGGZeQx+ADafqoEhiY4wabUyg/PFAexl0acCLneU3npzPOfkpaoEhT8RZM2dbHwAawNWKyqpjNeHnmFjSzEwDbPsurcOKFe83Hrlqx7MYIBokrJ/e/YpHk592KxKq4xuTwcZAX1JcrfA9Pf/Cd4ovvQmSGGa29jZLXB5sWCvs1jtcPw8pWLcWZIn/EQ5eR+xcPOTGGuhLYnjqjhVQzIXNSdUDUEf3ZRx5z/s5k2Y4oHretqJOJPNxLCm3b19/+jwFyitLV/vbA1oAAAAASUVORK5CYII='
 
+# fix os-specific glitches
+headings=[' ID ','  Name  ','                     Alias                       ','  Status  ','G '] # Table column widths can be set by the spacing of the headings!
+features_headings = ['ID   ','   Annotation    ','                 Alias                 ','Risk ', 'Organism']
+organisms_headings = ['ID   ','               Full name                  ','      Short name     ','RG    ']
+alias_length = 59
+plasmid_titles_size = 14
+features_titles_size = 15
+if horizontal_layout == 0:
+    plasmid_table_rows = 12
+    features_table_rows = 38
+    organisms_table_rows = 40
+    plasmid_summary_lines = 4
+    plasmid_purpose_lines = 4
+else:
+    plasmid_table_rows = 47
+    features_table_rows = 40
+    organisms_table_rows = 42
+    plasmid_summary_lines = 8
+    plasmid_purpose_lines = 5
+    
+
+
+if sys.platform == "win32":
+    headings=['ID',' Name ','            Alias            ','Status','G '] # Table column widths can be set by the spacing of the headings!
+    features_headings = ['ID ','Annotation','        Alias        ','Risk', 'Organism']
+    organisms_headings = ['ID','           Full name          ','Short name ','RG']
+    alias_length = 59
+    plasmid_titles_size = 14
+    features_titles_size = 15
+    if horizontal_layout == 1:
+        plasmid_table_rows = 40
+        features_table_rows = 33
+        organisms_table_rows = 35
+        plasmid_summary_lines = 5
+        plasmid_purpose_lines = 3
+
+elif sys.platform.startswith("linux"):  # could be "linux", "linux2", "linux3", ...
+    headings=['ID','     Name     ','                            Alias                           ','     Status     ',' G '] # Table column widths can be set by the spacing of the headings!
+    features_headings = ['ID ','     Annotation     ','                         Alias                       ','  Risk  ', '  Organism   ' ]
+    organisms_headings = ['ID','                               Full name                             ','    Short name    ','  RG  ']
+    plasmid_titles_size = 16
+    features_titles_size = 17
+    alias_length = 57
+    os_font_size = 13
+    os_scale_factor = 1.6
+    if horizontal_layout == 1:
+        plasmid_table_rows = 40
+        features_table_rows = 35
+        organisms_table_rows = 36
+        plasmid_summary_lines = 4
+        plasmid_purpose_lines = 4
+        plasmid_summary_lines = 6
+        plasmid_purpose_lines = 5
+
 ##### Plasmid data #####
 visible=[0,1,1,1,1] # Hide the primary key column in the table
+
 record_columns=[
-    ss.record('Plasmids.name',label='Plasmid name:',size=(35,10))+
-    [sg.T("Clone:")]+
-    ss.record('Plasmids.clone',no_label=True, size=(5,10))+
-    ss.record('Plasmids.gb',no_label=True, visible=False, size=(0,10))+
-    ss.record('Plasmids.date',no_label=True, readonly=True, size=(10,10)), # insvisible
-    [sg.T(spacer8)]+
-    ss.selector('cassettesSelector','Cassettes',size=(61,4)),
-    ss.record('Cassettes.content',label='Cassette:',size=(46,10),)+
-    [sg.Button('!', key=f'-info-', size=(1, 1)),]+
-    ss.actions('cassettesActions','Cassettes', edit_protect=False, navigation=False, save=True, search=False),
-
+    [sg.Column([
+        [sg.Text('Plasmid name:', size=(plasmid_titles_size,1))],
+        [sg.Text('          ', key='-SPACEREF-')],
+        [sg.Text('', key='-TEXTLEN-')]
+    ], vertical_alignment='top', pad=(0,0))]+
+    [sg.Column([
+        ss.record('Plasmids.name',no_label=True,size=(35,10))+
+        [sg.T("Clone:")]+
+        ss.record('Plasmids.clone',no_label=True, size=(5,10))+
+        ss.record('Plasmids.gb',no_label=True, visible=False, size=(0,10))+
+        ss.record('Plasmids.date',no_label=True, readonly=True, size=(10,10)), # invisible
+        ss.selector('cassettesSelector','Cassettes',size=(61,4)),
+    ], pad=(0,0))],
+    [sg.Column([
+        [sg.Text('Cassette:', size=(plasmid_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+
+    [sg.Column([
+        ss.record('Cassettes.content',no_label='True',size=(46,10),)+
+        [sg.Button('!', key='-info-', size=(1, 1)),]+
+        ss.actions('cassettesActions','Cassettes', edit_protect=False, navigation=False, save=True, search=False),
+    ], pad=(0,0))],
     # autocomplete
-    [sg.Text('Add Feature:' + spacer2)]+
-    [sg.Input(size=(input_width, 1), enable_events=True, key='-AIN-')] +
-    [sg.Text('Variant:')]+
-    [sg.Input(size=(15, 1), key='-VARIANT-')]+
-    [sg.Button(' ', image_data=img_base64, button_color = (sg.theme_background_color(), sg.theme_background_color()), key=f'-ADDFEATURE-')] +
-    [sg.CB('Ignore Case', default=True, k='-IGNORE CASE-')],
-    [sg.Text('                              ')] + [sg.pin(sg.Col([[sg.Listbox(values=[], size=(input_width, num_items_to_show), enable_events=True, key='-BOX-', select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, no_scrollbar=True)]], key='-BOX-CONTAINER-', pad=(0, 0), visible=False))],
-
-    ss.record('Plasmids.alias',label='Alias: ',size=(alias_length,10))+[sg.Button('+', key=f'-ALIAS_IN-', size=(1, 1)),],
-    ss.record('Plasmids.purpose',sg.MLine, (61, 3),label='Purpose: '),
-    ss.record('Plasmids.summary',sg.MLine, (61, 3),label='Cloning summary: '),
-    ss.record('Plasmids.backbone_vector',label= 'Orig. vector:', size=(29,10))+
-    [sg.Text('Status:' + spacer1)] + ss.record('Plasmids.status',no_label=True, element=sg.Combo, quick_editor=False, size=(18,10))+
+    [sg.Column([
+        [sg.Text('Add Feature:', size=(plasmid_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+
+    [sg.Column([
+        [sg.Combo(size=(25, 1), enable_events=True, key='-AIN-', values=[], disabled=True)] +
+        [sg.Text('Variant:')]+
+        [sg.Input(size=(20, 1), key='-VARIANT-', disabled=True)]+
+        [sg.Button(' ', image_data=img_base64, button_color = (sg.theme_background_color(), sg.theme_background_color()), key='-ADDFEATURE-')],
+    ], pad=(0,0))],
+    [sg.Column([
+        [sg.Text('Alias:', size=(plasmid_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+
+    ss.record('Plasmids.alias',no_label=True,size=(alias_length,10))+[sg.Button('+', key='-ALIAS_IN-', size=(1, 1)),],
+    [sg.Column([
+        [sg.Text('Purpose:', size=(plasmid_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+
+    ss.record('Plasmids.purpose',sg.MLine, (61, plasmid_purpose_lines),no_label=True),
+    [sg.Column([
+        [sg.Text('Cloning summary:', size=(plasmid_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+
+    ss.record('Plasmids.summary',sg.MLine, (61, plasmid_summary_lines),no_label=True),
+    [sg.Column([
+        [sg.Text('Orig. vector:', size=(plasmid_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+
+    ss.record('Plasmids.backbone_vector',no_label=True, size=(29,10))+
+    [sg.Text('Status:', pad=(1,0), justification='center')] + ss.record('Plasmids.status',no_label=True, element=sg.Combo, quick_editor=False, size=(18,10))+
     ss.actions('plasmidActions','Plasmids', edit_protect=False,navigation=False,save=True, search=False, insert=False, delete=False),
     
    #[sg.Col([[sg.Text('GMOs:' + spacer3),]],vertical_alignment='t')] + ss.selector('gmoSelector','GMOs', size=(61,5)), #better for Windows
-   [sg.Text('GMOs:' + spacer3),] + ss.selector('gmoSelector','GMOs', size=(61,5)), #better for macOS
+    [sg.Column([
+        [sg.Text('GMOs:', size=(plasmid_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+ 
+    ss.selector('gmoSelector','GMOs', size=(61,5)), #better for macOS
    #[sg.T('                              '),] + ss.selector('gmoSelector', 'GMOs', element=sg.Table, headings=['ID', 'GMO_summary', 'Organism         ','Plasmid ID','Target RG', 'Date generated', 'Date destroyed'], visible_column_map=[0,0,1,0,1,1,1],num_rows=5),
-    ss.record('Plasmids.organism_selector',element=sg.Combo, quick_editor=False, size=(24,10),)+
-    [sg.T('Target RG:'+ spacer4),]+
-    ss.record('Plasmids.target_RG',size=(3,10), no_label=True)+
-    [sg.T('Approval: '),] + [sg.Input('-', size=(9,10), key='-APPROVAL-')],
-    [sg.T(spacer5),] + [sg.T('Made / Destroyed:'),] + ss.record('Plasmids.generated',size=(10,10), no_label=True) + [sg.T(''),]+
-    ss.record('Plasmids.destroyed',size=(10,10), no_label=True)+
-    [sg.Button('Add', key=f'-ADDORGA-', size=(3, 1)),]+
-    [sg.Button(':)', key=f'-ADDFAV-', size=(1, 1)),]+
-    ss.actions('GMOActions','GMOs', edit_protect=False,navigation=False,save=False, search=False, insert=False)+
-    [sg.Button('Destroy', key=f'-DESTROYORGA-', size=(6, 1)),],
+    [sg.Column([
+        [sg.Text('Organism selector:', size=(plasmid_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+ 
+    [sg.Column([
+        ss.record('Plasmids.organism_selector',element=sg.Combo, quick_editor=False, no_label=True, size=(24,10),)+
+        [sg.T('Target RG:'),]+
+        ss.record('Plasmids.target_RG',size=(3,10), no_label=True)+
+        [sg.T('Approval: '),] + [sg.Input('-', size=(9,10), key='-APPROVAL-')],
+        [sg.T('Made / Destroyed:'),] + ss.record('Plasmids.generated',size=(10,10), no_label=True) +
+        ss.record('Plasmids.destroyed',size=(10,10), no_label=True)+
+        [sg.Button('Add', key='-ADDORGA-', size=(3, 1)),]+
+        [sg.Button(':)', key='-ADDFAV-', size=(1, 1)),]+
+        ss.actions('GMOActions','GMOs', edit_protect=False,navigation=False,save=False, search=False, insert=False)+
+        [sg.Button('Destroy', key='-DESTROYORGA-', size=(6, 1)),],
+    ], pad=(0,0))],
 ]
 
 selectors=[
-    ss.actions('plasmidActions','Plasmids',search_size=(27, 1)) + [sg.Button('', image_data=img2_base64, button_color = (sg.theme_background_color(), sg.theme_background_color()), key=f'-DUPLICATE-')]+
-    [sg.Button('ICE', key=f'-THISICE-', size=(3, 1)),],
-    ss.selector('tableSelector', 'Plasmids', element=sg.Table, headings=headings, visible_column_map=visible,num_rows=12), #15 rows
+    ss.actions('plasmidActions','Plasmids',search_size=(27, 1)) + [sg.Button('', image_data=img2_base64, button_color = (sg.theme_background_color(), sg.theme_background_color()), key='-DUPLICATE-')]+
+    [sg.Button('ICE', key='-THISICE-', size=(3, 1)),],
+    ss.selector('tableSelector', 'Plasmids', element=sg.Table, headings=headings, visible_column_map=visible,num_rows=plasmid_table_rows), #15 rows
 ]
-'''
-tablayout_plasmid = [
-    [sg.Frame('Plasmids',selectors)],
-    [sg.Col(record_columns,vertical_alignment='t')],
-]
-'''
-# without frame
-tablayout_plasmid = selectors + record_columns
 
-sub_genebank = [ [sg.Text(spacer9),]+
+sub_genebank = [ 
+    [sg.Text(size=(plasmid_titles_size-1,1))]+
     ss.record('Plasmids.gb_name', no_label=True, size=(42,10))+
-    [sg.Text(""),]+
-    [sg.Button('+', key=f'insGb', size=(1, 1)),]+
-    [sg.Text(spacer6),]+
-    [sg.Button('Download', key=f'-down_gb-', size=(8, 1)),]+
+    [sg.Col([[sg.Button('+', key='insGb', size=(1, 1))]], element_justification="center", key='-GENEBANKCOL-')]+
+    [sg.Button('Download', key='-down_gb-', size=(8, 1))]+
     ss.record('Plasmids.genebank',no_label=True, size=(1,10)),
 ]
 
-tablayout_attach = [[sg.T(spacer10)]+
-
+tablayout_attach = [
+    
+    [sg.T(size=(plasmid_titles_size-1,1))]+
     ss.selector('attachmentSelector','Attachments', size=(39,4))+
-    [sg.Text(spacer7),]+
-    [sg.Button('+', key=f'insElement', size=(1, 1)),]+
-    ss.actions('attachmentActions','Attachments', edit_protect=False,navigation=False,save=False,search=False,insert=False)+
-    [sg.Button('Download', key=f'-down_att-', size=(8, 1)),],
+    [sg.Col([],size=(0,0), element_justification="center", vertical_alignment="center", key='-ATTACHCOL-')]+
+    [sg.Button('+', key='insElement', size=(1, 1))]+
+    ss.actions('attachmentActions','Attachments',edit_protect=False,navigation=False,save=False,search=False,insert=False)+
+    [sg.Button('Download', key='-down_att-', size=(8, 1))]
 ]
 
-tablayout_plasmid += [[sg.Frame('Genebank', sub_genebank)]]
-tablayout_plasmid += [[sg.Frame('Attachments', tablayout_attach)]]
+record_columns += [[sg.Frame('Genebank', sub_genebank, key='-GENEBANKFRAME-')]]
+record_columns += [[sg.Frame('Attachments', tablayout_attach, key='-ATTACHFRAME-')]]
+
+# without frame
+if horizontal_layout == 0:
+    tablayout_plasmid = selectors + record_columns
+else:
+    tablayout_plasmid = [ [sg.Column(selectors, vertical_alignment='top'), sg.VSeparator(), sg.Column(record_columns, vertical_alignment='center')], ]
 
 ##### GMO #####
 tablayout_GMO = [
     [sg.Text('Maintenance')],
-    [sg.Button('Run', key=f'-CHECKFEATURES-'),] + [sg.Text('Check Nucleic acid feature glossary completeness')],
-    [sg.Button('Run', key=f'-CHECKORGANISMS-'),] + [sg.Text('Check Organisms glossary completeness')], 
-    [sg.Button('Run', key=f'-CHECKPLASMIDS-'),] + [sg.Text('Check for plasmid duplications and completeness')],
+    [sg.Button('Run', key='-CHECKFEATURES-'),] + [sg.Text('Check Nucleic acid feature glossary completeness')],
+    [sg.Button('Run', key='-CHECKORGANISMS-'),] + [sg.Text('Check Organisms glossary completeness')], 
+    [sg.Button('Run', key='-CHECKPLASMIDS-'),] + [sg.Text('Check for plasmid duplications and completeness')],
     [sg.Text('')],
     [sg.Text('JBEI/ice')], 
-    [sg.Button('Run', key=f'-ICE-')] + [sg.Text('Upload/update all plasmid information and gb files to JBEI/ice')] + [sg.CB('Only new plasmids', default=True, k='-ONLYNEW-')],
+    [sg.Button('Run', key='-ICE-')] + [sg.Text('Upload/update all plasmid information and gb files to JBEI/ice')] + [sg.CB('Only new plasmids', default=True, k='-ONLYNEW-')],
     [sg.Text('')],
     [sg.Text('GMO')], 
-    [sg.Button('Run', key=f'-PLASMIDLIST-'),] + [sg.Text('Generate plasmid list')],
-    [sg.Button('Run', key=f'-FORMBLATT-'),] + [sg.Text('Generate Formblatt Z')],
+    [sg.Button('Run', key='-PLASMIDLIST-'),] + [sg.Text('Generate plasmid list')],
+    [sg.Button('Run', key='-FORMBLATT-'),] + [sg.Text('Generate Formblatt Z')],
     [sg.Text('')],
     [sg.Text('Data import')],
-    [sg.Button('Run', key=f'-IMPORTGMOCU-'),] + [sg.Text('Import data from another gmocu database file')],
+    [sg.Button('Run', key='-IMPORTGMOCU-'),] + [sg.Text('Import data from another gmocu database file')],
     #[sg.Output(size=(78, 20))],
 ]
 
 ##### Features #####
 tablayout_Features = [
-    ss.selector('featureSelector', 'Features', element=sg.Table, headings=features_headings , visible_column_map=[0,1,1,1,1],num_rows=40), #50
+    ss.selector('featureSelector', 'Features', element=sg.Table, headings=features_headings , visible_column_map=[0,1,1,1,1],num_rows=features_table_rows),
     ss.actions('featureActions','Features'),
-    ss.record('Features.annotation',label='Annotation:', enable_events=True, size=(62,10)),
-    ss.record('Features.alias',label='Alias:',size=(62,10)),
-    ss.record('Features.risk',label='Risk:',size=(62,10)),
+    [sg.Column([
+        [sg.Text('Annotation:', size=(features_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+
+    ss.record('Features.annotation',no_label=True, enable_events=True, size=(62,10)),
+    [sg.Column([
+        [sg.Text('Alias:', size=(features_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+
+    ss.record('Features.alias',no_label=True,size=(62,10)),
+    [sg.Column([
+        [sg.Text('Risk:', size=(features_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+
+    ss.record('Features.risk',no_label=True,size=(62,10)),
     #ss.record('Features.organism', element=sg.Combo, label='Organism:',size=(62,10)),
-    [sg.Text("Organism:             ")] + [sg.Col([[sg.Combo(orga_selection, size=(26,10), enable_events=True, key='-FEATURECOMBO-')]], vertical_alignment='t')]+
-    ss.record('Features.organism', no_label=True, size=(32,10)),
-    [sg.Button('Export all to Excel', key=f'-ALLEXCEL-')] +
-    [sg.Button('Export used to Excel', key=f'-USEDEXCEL-')],
-    [sg.Button('Replace glossary with Excel file', key=f'-IMPEXCEL-')]+
-    [sg.Button('Add entries from Excel which not yet exist', key=f'-ADDEXCEL-')],
-    [sg.Button('Add entries from Google Sheet which not yet exist', key=f'-ADDGOOGLE-')]+
-    [sg.Button('!', key=f'-FEATUREINFO-')],
+    [sg.Column([
+        [sg.Text('Organism:', size=(features_titles_size,1))]
+    ], vertical_alignment='top', pad=(0,0))]+
+    [sg.Combo(orga_selection, size=(26,10), enable_events=True, key='-FEATURECOMBO-')]+
+    ss.record('Features.organism', no_label=True, size=(32,10))]
+tablayout_Features_controls = [
+    [sg.Button('Export all to Excel', key='-ALLEXCEL-')] +
+    [sg.Button('Export used to Excel', key='-USEDEXCEL-')],
+    [sg.Button('Replace glossary with Excel file', key='-IMPEXCEL-')]+
+    [sg.Button('Add entries from Excel which not yet exist', key='-ADDEXCEL-')],
+    [sg.Button('Add entries from Google Sheet which not yet exist', key='-ADDGOOGLE-')]+
+    [sg.Button('!', key='-FEATUREINFO-')],
     [sg.Text("Input file name: " + os.sep.join([user_data, 'templates', 'nucleic_acid_features.xlsx']))],
 ]
+if horizontal_layout == 0:
+    tablayout_Features += tablayout_Features_controls
+else:
+    tablayout_Features = [ [sg.Column(tablayout_Features, vertical_alignment='top'), sg.VSeparator(), sg.Column(tablayout_Features_controls, vertical_alignment='top')], ]
 
 ##### Organisms #####
 tablayout_Organisms = [
-    ss.selector('organismSelector', 'Organisms', element=sg.Table, headings=organisms_headings , visible_column_map=[0,1,1,1],num_rows=40), #50
+    ss.selector('organismSelector', 'Organisms', element=sg.Table, headings=organisms_headings , visible_column_map=[0,1,1,1],num_rows=organisms_table_rows),
     ss.actions('organismActions','Organisms'),
     #ss.record('Organisms.id',label='ID:',size=(62,10)),
     ss.record('Organisms.full_name',label='Full name:',size=(62,10)),
     ss.record('Organisms.short_name', label='Short name:',size=(62,10)),
-    ss.record('Organisms.RG',label='RG:',size=(62,10)),
-    [sg.Button('Export all to Excel', key=f'-ALLEXCELORGA-')] +
-    [sg.Button('Export used to Excel', key=f'-USEDEXCELORGA-')],
-    [sg.Button('Replace glossary with Excel file', key=f'-IMPEXCELORGA-')]+
-    [sg.Button('Add entries from Excel which not yet exist', key=f'-ADDEXCELORGA-')],
-    [sg.Button('Add entries from Google Sheet which not yet exist', key=f'-ADDGOOGLEORGA-')],
+    ss.record('Organisms.RG',label='RG:',size=(62,10))]
+tablayout_Organisms_controls = [
+    [sg.Button('Export all to Excel', key='-ALLEXCELORGA-')] +
+    [sg.Button('Export used to Excel', key='-USEDEXCELORGA-')],
+    [sg.Button('Replace glossary with Excel file', key='-IMPEXCELORGA-')]+
+    [sg.Button('Add entries from Excel which not yet exist', key='-ADDEXCELORGA-')],
+    [sg.Button('Add entries from Google Sheet which not yet exist', key='-ADDGOOGLEORGA-')],
     [sg.Text("Input file name: " + os.sep.join([user_data, 'templates', 'organisms.xlsx']))],
 ]
+if horizontal_layout == 0:
+    tablayout_Organisms += tablayout_Organisms_controls
+else:
+    tablayout_Organisms = [ [sg.Column(tablayout_Organisms, vertical_alignment='top'), sg.VSeparator(), sg.Column(tablayout_Organisms_controls, vertical_alignment='top')], ]
 
 ##### Settings #####
-tablayout_Settings = [
-    ss.actions('settingsActions','Settings', edit_protect=True,navigation=False,save=True, search=False, insert=False, delete=False) + [sg.Button('Info', key=f'-SETTINGSINFO-'),],
+tablayout_Settings_1 = [
     ss.record('Settings.name',label='Name:', size=(62,10)),
     ss.record('Settings.initials',label='Initials:', size=(62,10)),
     ss.record('Settings.email',label='Email:', size=(62,10)),
@@ -261,24 +320,42 @@ tablayout_Settings = [
     ss.record('Settings.ice',label='JBEI/ice API:', element=sg.Combo, size=(56,10)),
     ss.record('Settings.gdrive_glossary',label='Google Sheet ID:', size=(62,10)),
     [sg.Text("Style*:                   ")] + [sg.Col([[sg.Combo(['Reddit', 'DarkBlack', 'Black', 'BlueMono', 'BrownBlue', 'DarkBlue', 'LightBlue', 'LightGrey6'], default_value=sg.user_settings_get_entry('-THEME-', 'Reddit'), size=(60,10), enable_events=True, key='-SETSTYLE-')]], vertical_alignment='t')],
-    ss.record('Settings.style',no_label=True, size=(29,10)),
+    ss.record('Settings.style',no_label=True, size=(29,10)),   
+]
+
+tablayout_Settings_2 = [
     ss.record('Settings.scale',label='Scale factor*:', size=(62,10)),
     ss.record('Settings.font_size',label='Font size*:', size=(62,10)),
+    ss.record('Settings.horizontal_layout',label='Horizontal layout*:', element=sg.CBox),
     ss.record('Settings.duplicate_gmos',label='Duplicate GMOs:', element=sg.CBox),
     ss.record('Settings.upload_completed',label='Upload completed:', element=sg.CBox),
     ss.record('Settings.upload_abi',label='Upload .ab1 files:', element=sg.CBox),
     [sg.Text('*Restart required')],
-    [sg.Text('')],
+]
+
+tablayout_Settings_TargetOrganisms = [
     [sg.Text('Target organisms: ')] +
-    [sg.Col([ss.selector('organismselectionSelector','OrganismSelection',size=(60,6)),
+    [sg.Col([ss.selector('organismselectionSelector','OrganismSelection',size=(60,7)),
     [sg.Combo(orga_selection, size=(30,10), enable_events=True, key='-SETSELORGA-')]+
-    [sg.Button('Add', key=f'-ADDSELORGA-')]+
+    [sg.Button('Add', key='-ADDSELORGA-')]+
     ss.actions('organismselectionActions','OrganismSelection', edit_protect=False, navigation=False, save=False, search=False, insert=False)], vertical_alignment='t')],
+]
+
+tablayout_Settings_FavOrganisms = [
     [sg.Text('Fav. organisms:    ')] +
     [sg.Col([ss.selector('favouritesSelector','OrganismFavourites',size=(60,6)),
-    [sg.Button('Copy', key=f'-COPYFAVORGA-')]+
+    [sg.Button('Copy', key='-COPYFAVORGA-')]+
     ss.actions('favouritesselectionActions','OrganismFavourites', edit_protect=False, navigation=False, save=False, search=False, insert=False)], vertical_alignment='t')],
     [sg.Text('                                  All listed organisms must also exist in Target organisms.')],
+]
+
+if horizontal_layout == 0:
+    tablayout_Settings = [ss.actions('settingsActions','Settings', edit_protect=True,navigation=False,save=True, search=False, insert=False, delete=False) + [sg.Button('Info', key='-SETTINGSINFO-'),] + ss.record('Settings.version',no_label=True, readonly=True, visible=False, size=(0,0))] + tablayout_Settings_1 + tablayout_Settings_2 + tablayout_Settings_TargetOrganisms + tablayout_Settings_FavOrganisms
+else:
+    tablayout_Settings = [
+    ss.actions('settingsActions','Settings', edit_protect=True,navigation=False,save=True, search=False, insert=False, delete=False) + [sg.Button('Info', key='-SETTINGSINFO-'),] + ss.record('Settings.version',no_label=True, readonly=True, visible=False, size=(0,0)), # invisible,
+    [sg.Column(tablayout_Settings_1, vertical_alignment='top')]+[sg.Column(tablayout_Settings_2, vertical_alignment='top')],                  
+    [sg.Column(tablayout_Settings_TargetOrganisms, vertical_alignment='top')]+[sg.Column(tablayout_Settings_FavOrganisms, vertical_alignment='top')],
 ]
 
 ##### Tabs #####
@@ -289,22 +366,67 @@ layout = [[sg.TabGroup([[sg.Tab('Plasmid data', tablayout_plasmid, key='-pldata-
                          sg.Tab('Settings', tablayout_Settings),
                          ]], key='-tabs-', tab_location='top', selected_title_color='purple')],
                          ]
+                         
 ##### Window #####
-win=sg.Window('GMOCU - GMO Documentation', layout, scaling=scale_factor, finalize=True)
+win=sg.Window('GMOCU - GMO Documentation', layout, scaling=scale_factor, return_keyboard_events=True, finalize=True)
 win['Plasmids.gb_name'].update(disabled=True)
 win['Plasmids.gb'].update(disabled=True)
 win['Plasmids.genebank'].update(visible=False)
 win['Settings.style'].update(visible=False)
-
-sql_script ='gmocu.sql'
+win['-ATTACHFRAME-'].expand(True, True)
+win['-GENEBANKFRAME-'].expand(True, True)
+win.refresh()
+win['-ATTACHCOL-'].expand(True, True)
+win['-ATTACHCOL-'].contents_changed()
+win['-GENEBANKCOL-'].expand(True, True)
+win.refresh()
+win.move_to_center()
+win.refresh()
 
 # update database path for use with appdirs
 database = os.sep.join([user_data, database])
 
+sql_script ='gmocu.sql'
 # generate database
 db=ss.Database(database, win,  sql_script=sql_script) #<=== Here is the magic!
 # Note:  sql_script is only run if *.db does not exist!  This has the effect of creating a new blank
 # database as defined by the sql_script file if the database does not yet exist, otherwise it will use the database!
+
+# Maintain db changes in version updates, try altering existing Settings table
+connection = sqlite3.connect(database) 
+cursor = connection.cursor()
+try:
+    db_saved_version = db['Settings']['version']
+except:
+    db_saved_version = 0
+try:
+    if db_saved_version < 0.5:
+        settings_columns = [i[1] for i in cursor.execute('PRAGMA table_info(Settings)')]
+        if not "version" in settings_columns:
+            cursor.execute("ALTER TABLE Settings ADD COLUMN version FLOAT DEFAULT 0;")
+            sg.popup('The database file structure has been updated. Please restart GMOCU.')  
+        if not "horizontal_layout" in settings_columns:
+            cursor.execute("ALTER TABLE Settings ADD COLUMN horizontal_layout INTEGER DEFAULT 0;")
+            if sys.platform == "win32":
+                win['Settings.horizontal_layout'].update(1)
+                db['Settings'].save_record(display_message=False)
+                    
+except Exception as e:
+    sg.popup(e)
+    pass
+finally:
+    cursor.close()
+    connection.commit()
+    connection.close()
+
+# write current version to db file
+try:
+    if db_saved_version < version_no:
+        win['Settings.version'].update(version_no)
+        db['Settings'].save_record(display_message=False)
+        
+except Exception as e:
+    sg.popup(e)
 
 #db['Plasmids'].set_order_clause('ORDER BY id ASC')
 db['Cassettes'].set_order_clause('ORDER BY cassette_id ASC')
@@ -315,6 +437,7 @@ selected_plasmid=db['Plasmids']['id']
 db['Plasmids'].set_by_pk(selected_plasmid)
 
 # disable extra elements
+extra_el_disabled = True
 win['-DUPLICATE-'].update(disabled=True)
 win['-THISICE-'].update(disabled=True)
 win['-ALIAS_IN-'].update(disabled=True)
@@ -338,6 +461,7 @@ win['Settings.style'].update(disabled=True)
 win['-SETSTYLE-'].update(disabled=True)
 win['Settings.scale'].update(disabled=True)
 win['Settings.font_size'].update(disabled=True)
+win['Settings.horizontal_layout'].update(disabled=True)
 win['Settings.duplicate_gmos'].update(disabled=True)
 win['Settings.upload_completed'].update(disabled=True)
 win['Settings.upload_abi'].update(disabled=True)
@@ -351,6 +475,7 @@ win.bind('<Down>', '-DOWNKEY-')
 win.bind('<Up>', '-UPKEY-')
 win.bind('<Return>', '-ENTERKEY-')
 win.bind('<Escape>', '-ESCAPEKEY-')
+win.bind('<Button-1>', '-LEFTCLICK-')
 win.bind('<Control-KeyPress-e>', '-CTRL-E-') # trigger event with key press combination
 
 ### read settings ###
@@ -372,17 +497,15 @@ def read_settings():
     scale               = settings['scale'][0]
     font_size           = settings['font_size'][0]
     style               = settings['style'][0]
+    horizontal_layout   = settings['horizontal_layout'][0]    
 
     ice_instance        = credits['ice_instance'][0]
     ice_token           = str(credits['ice_token'][0])
     ice_token_client    = credits['ice_token_client'][0]
 
-    return [user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client]
+    return user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout
 
-
-
-l = read_settings()
-user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13]
+user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout = read_settings()
 
 ### GUI settings ###
 if scale == '__':
@@ -391,11 +514,14 @@ if font_size == '__':
     font_size = os_font_size
     win['Settings.font_size'].update(font_size)
     win['Settings.scale'].update(scale)
-    db['Settings'].save_record(display_message=False)
+    if sys.platform == "win32":
+        win['Settings.horizontal_layout'].update(1)
+    db['Settings'].save_record(display_message=False)    
 
 sg.user_settings_set_entry('-THEME-', style)
 sg.user_settings_set_entry('-SCALE-', float(scale))
 sg.user_settings_set_entry('-FONTSIZE-', int(font_size))
+sg.user_settings_set_entry('-HORIZONTAL_LAYOUT-', int(win['Settings.horizontal_layout'].get()))
 
 ### autocomplete ###
 def autocomp():
@@ -463,7 +589,7 @@ def readBlobData(attId, attName, path):
 
     except sqlite3.Error as error:
         print("Failed to read blob data from sqlite table", error)
-    except IsADirectoryError as iade:
+    except IsADirectoryError:
         sg.popup("There is no attachment to download.")
     finally:
         if connection:
@@ -624,8 +750,7 @@ def upload_ice(thisice):
 
     try:
         l = read_settings()
-        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13]
-
+        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13], l[14]
         configuration = dict(
         root = ice_instance,
         token = ice_token,
@@ -936,6 +1061,7 @@ def import_data():
         connection.close()
 
     except Exception as e:
+        sg.popup(e)
         pass
 
 def check_plasmids():
@@ -959,7 +1085,6 @@ def check_plasmids():
 
         plasmid_wo_gmos = []
         gmo_pids = pd.read_sql_query("SELECT plasmid_id FROM GMOs", connection)
-        connection.close()
         gmo_pids = list(gmo_pids['plasmid_id'])
         for pid in plasmid_ids:
             if pid not in gmo_pids:
@@ -969,32 +1094,43 @@ def check_plasmids():
 
     except Exception as e:
         sg.popup(e)
+    finally:
+        connection.close()
 
 def check_features():
     try:
         connection = sqlite3.connect(database)
-        glossay_features = pd.read_sql_query("SELECT annotation FROM Features ", connection)
-        glossay_features = list(glossay_features['annotation'])
+        glossary_features = pd.read_sql_query("SELECT annotation FROM Features ", connection)
+        glossary_features = list(glossary_features['annotation'])
         # check for duplicates in glossary_features
         seen = set()
-        dupes = [x for x in glossay_features if x in seen or seen.add(x)]
-        used_features = pd.read_sql_query("SELECT content FROM Cassettes ", connection)
-        used_features = list(used_features['content'])
+        dupes = [x for x in glossary_features if x in seen or seen.add(x)]
+        db_cassette_plasmid_data = pd.read_sql_query("SELECT content, plasmid_id FROM Cassettes ", connection)
+        plasmid_ids = list(db_cassette_plasmid_data['plasmid_id'])
+        used_cassettes = list(db_cassette_plasmid_data['content'])
         # remove variants in []
-        used_features = [re.sub('[\[].*?[\]]', '', feature) for feature in used_features]
-        used_features = '-'.join(used_features).split('-')
-        connection.close()
-        comparison = np.setdiff1d(used_features, glossay_features) # yields the elements in `used_features` that are NOT in `glossay_features`
-        redundant = np.setdiff1d(glossay_features, used_features)
+        used_cassettes = [re.sub('\[.*?]', '', cassette) for cassette in used_cassettes]
+        total_used_features = []
+        missing_features = []
+        for i in range(len(used_cassettes)):
+            used_features = used_cassettes[i].split('-')
+            total_used_features += used_features
+            comparison = np.setdiff1d(used_features, glossary_features) # yields the elements in `used_features` that are NOT in `glossary_features`
+            plasmid_name = pd.read_sql_query("SELECT name,id FROM Plasmids WHERE id = {}".format(plasmid_ids[i]), connection)['name'][0]
+            for element in comparison:
+                missing_features.append(plasmid_name + ': ' + element)
+        redundant = np.setdiff1d(glossary_features, total_used_features)
         nonmissing = ''
-        if len(comparison) == 0:
+        if len(missing_features) == 0:
             nonmissing = True
         else:
-            sg.popup('The following features are used as cassettes but missing in the Nucleic acids feature glossary:\n', ",".join(comparison), '\n Please add them!')
+            sg.popup('The following features are used in the cassettes of the listed plasmids, but missing in the "Nucleic acids" feature glossary:\n', '\n'.join(missing_features), '\nPlease check if there are no misspells and, if not, add them to the glossary!', title='Features missing!')
 
         return [nonmissing, redundant, dupes]
     except Exception as e:
         sg.popup(e)
+    finally:
+        connection.close()
 
 def check_organisms():
     try:
@@ -1006,7 +1142,6 @@ def check_organisms():
         used_organisms_list = feature_organisms_list + gmo_organisms_list
         organissm_glossary = pd.read_sql_query("SELECT short_name FROM Organisms ", connection)
         organissm_glossary_list = list(organissm_glossary['short_name'])
-        connection.close()
         # check for duplicates in organissm_glossary_list
         seen = set()
         dupes = [x for x in organissm_glossary_list if x in seen or seen.add(x)]
@@ -1016,14 +1151,80 @@ def check_organisms():
         if len(missing_feature_organisms) == 0:
             nonmissing = True
         else:
-            sg.popup('The following organisms are associated with used Nucleic acids features but are not in the Organism glossary:\n', ",".join(missing_feature_organisms), '\n Please add them!')
+            sg.popup('The following organisms are associated with used Nucleic acids features but are not in the Organism glossary:\n', ",".join(missing_feature_organisms), '\nPlease check if there are no misspells and, if not, add them to the glossary!', title='Organisms missing!')
         return [nonmissing, redundant, dupes]
     except Exception as e:
         sg.popup(e)
+    finally:
+        connection.close()
 
 ### autocomplete ###
-list_element:sg.Listbox = win.Element('-BOX-')           # store listbox element for easier access and to get to docstrings
-prediction_list, input_text, sel_item = [], "", 0
+def handler(event):
+    num_opt = int((win.mouse_location()[1] - active_element.TooltipObject.tipwindow.winfo_y()) / (active_element.TooltipObject.tipwindow.winfo_height()/len(active_element.Values)))
+    active_element.set_focus()
+    active_element.Widget.event_generate('<Down>')
+    active_element.update(set_to_index=num_opt)
+    
+def clear_combo_tooltip(ui_handle: sg.Element) -> None:
+    if tt := ui_handle.TooltipObject:
+        tt.hidetip()
+        ui_handle.TooltipObject = None
+
+def show_combo_tooltip(ui_handle: sg.Element, tooltip: [str], space_ref: sg.Element, text_len: sg.Element) -> None:
+    max_len = 0
+    for i in tooltip:
+        text_len.update(i)
+        win.refresh()
+        if text_len.get_size()[0] > max_len:
+            max_len = text_len.get_size()[0]
+    text_len.update('')
+    win.refresh()
+    
+    handle_width = ui_handle.get_size()[0]
+    space_width = space_ref.get_size()[0]/10
+    tooltip = "\n".join([i + " "*round((handle_width - max_len)/space_width) for i in tooltip])
+    ui_handle.set_tooltip(tooltip)
+    tt = ui_handle.TooltipObject
+    tt.widget.unbind("<Enter>")
+    tt.widget.unbind("<Leave>")
+    tt.y += 40
+    tt.showtip()
+    tt.tipwindow.bind('<Button-1>', handler)
+    
+
+def autocomplete(event: str, event_data: dict[str, str], auto_options: list[str], ui_handle: sg.Element, space_ref: sg.Element, text_len: sg.Element) -> None:
+    new_text = event_data[ui_handle.key]
+    if new_text == '':
+        if auto_options['show_on_empty']:
+            sym = auto_options['values']
+        else:
+            sym = []
+    else:
+        matches = process.extractBests(new_text, auto_options['values'], scorer=lambda x,y:fuzz.ratio(x,y)+40*y.lower().startswith(x.lower()), score_cutoff=45)
+        sym = [m[0] for m in matches]
+    clear_combo_tooltip(ui_handle=ui_handle)  
+    ui_handle.update(new_text, values=sym)
+    
+    if event == '	' and len(sym):
+        ui_handle.update(sym[0])
+    elif event == "-DOWNKEY-" or (len(sym) and sym[0] == new_text) or not len(sym) or new_text == '':
+        return
+    else:
+        show_combo_tooltip(ui_handle=ui_handle, tooltip=sym, space_ref=space_ref, text_len=text_len)
+
+autocomp_el_keys = ['-AIN-', '-FEATURECOMBO-']
+autocomp_options = {'-AIN-': {'values': choices, 'show_on_empty': False}, 
+                    '-FEATURECOMBO-': {'values': orga_selection, 'show_on_empty': True}}
+active_element = win[[i for i in win.AllKeysDict.keys()][0]]
+active_element.set_focus()  
+space_ref = win['-SPACEREF-']
+text_len = win['-TEXTLEN-']
+text_len.update(text_color=text_len.BackgroundColor)
+sg.PySimpleGUI.TOOLTIP_BACKGROUND_COLOR = win['-AIN-'].BackgroundColor
+sg.set_options(tooltip_font=(('Helvetica', font_size)))
+win.refresh()
+
+
 
 # call initials on first start, changing initals later is not allowed because it might create a mess when updating plasmids on ice as a new folder would be created
 initials_value = db['Settings']['initials']
@@ -1035,16 +1236,28 @@ if initials_value == '__':
 
 # WHILE
 #-------------------------------------------------------
+check_plasmids()
+check_features()
+check_organisms()
 while True:
     event, values = win.read()
     #print('event:', event)
+    for key in autocomp_el_keys:
+        clear_combo_tooltip(ui_handle=win[key])
     #print('values:', values)
 
+### Let PySimpleSQL process its own events! Simple! ###
+    if db.process_events(event, values):
+        logger.info(f'PySimpleDB event handler handled the event {event}!')
+        
 ### Fix display ###
     if event == 'cassettesActions.table_insert':
         db['Plasmids'].save_record(display_message=False)
         selected_plasmid=db['Plasmids']['id']
         db['Plasmids'].set_by_pk(selected_plasmid)
+    elif event == 'cassettesActions.db_save':
+        check_features()
+        check_organisms()
     elif event == 'featureActions.db_save':
         db['Features'].save_record(display_message=False)
         corrected_value = db['Features']['annotation']
@@ -1055,56 +1268,52 @@ while True:
         choices = autocomp()
     elif event == 'settingsActions.db_save':
         db['Settings'].save_record(display_message=False)
-        l = read_settings()
-        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13]
+        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout = read_settings()
         sg.user_settings_set_entry('-THEME-', (values['Settings.style']))
         sg.user_settings_set_entry('-SCALE-', (values['Settings.scale']))
         sg.user_settings_set_entry('-FONTSIZE-', (values['Settings.font_size']))
         win['Settings.style'].update(disabled=True) # not a perfect solution
         win['Settings.style'].update(value=values['-SETSTYLE-'])
     elif event == 'insElement':
-        db['Plasmids'].save_record(display_message=False)
-    elif event == 'plasmidActions.edit_protect':
+        db['Plasmids'].save_record(display_message=False)  
+    elif event in ['settingsActions.edit_protect', 'featureActions.edit_protect', 'plasmidActions.edit_protect']:
         # enable extra elements
-        win['-DUPLICATE-'].update(disabled=False)
-        win['-THISICE-'].update(disabled=False)
-        win['-ADDFEATURE-'].update(disabled=False)
-        win['-ALIAS_IN-'].update(disabled=False)
-        win['insGb'].update(disabled=False)
-        win['insElement'].update(disabled=False)
-        win['-down_att-'].update(disabled=False)
-        win['-down_gb-'].update(disabled=False)
-        win['-ADDORGA-'].update(disabled=False)
-        win['-DESTROYORGA-'].update(disabled=False)
-        win['-APPROVAL-'].update(disabled=False)
-        win['-ADDFAV-'].update(disabled=False)
-    elif event == 'featureActions.edit_protect':
-        win['-FEATURECOMBO-'].update(disabled=False)
-
+        extra_el_disabled = not extra_el_disabled
+        win['-DUPLICATE-'].update(disabled=extra_el_disabled)
+        win['-THISICE-'].update(disabled=extra_el_disabled)
+        win['-ADDFEATURE-'].update(disabled=extra_el_disabled)
+        win['-ALIAS_IN-'].update(disabled=extra_el_disabled)
+        win['insGb'].update(disabled=extra_el_disabled)
+        win['insElement'].update(disabled=extra_el_disabled)
+        win['-down_att-'].update(disabled=extra_el_disabled)
+        win['-down_gb-'].update(disabled=extra_el_disabled)
+        win['-ADDORGA-'].update(disabled=extra_el_disabled)
+        win['-DESTROYORGA-'].update(disabled=extra_el_disabled)
+        win['-APPROVAL-'].update(disabled=extra_el_disabled)
+        win['-ADDFAV-'].update(disabled=extra_el_disabled)
+        win['-AIN-'].update(disabled=extra_el_disabled)
+        win['-VARIANT-'].update(disabled=extra_el_disabled)
+        win['-FEATURECOMBO-'].update(disabled=extra_el_disabled)
         #win['Features.organism'].update(disabled=True) #always disabled, not working?
-    elif event == 'settingsActions.edit_protect':
-        win['Settings.name'].update(disabled=False)
+        win['Settings.name'].update(disabled=extra_el_disabled)
         win['Settings.initials'].update(disabled=True)
-        win['Settings.email'].update(disabled=False)
-        win['Settings.institution'].update(disabled=False)
-        win['Settings.ice'].update(disabled=False)
-        win['Settings.gdrive_glossary'].update(disabled=False)
-        win['Settings.style'].update(disabled=False)
-        win['-SETSTYLE-'].update(disabled=False)
+        win['Settings.email'].update(disabled=extra_el_disabled)
+        win['Settings.institution'].update(disabled=extra_el_disabled)
+        win['Settings.ice'].update(disabled=extra_el_disabled)
+        win['Settings.gdrive_glossary'].update(disabled=extra_el_disabled)
+        win['Settings.style'].update(disabled=extra_el_disabled)
+        win['-SETSTYLE-'].update(disabled=extra_el_disabled)
         win['Settings.scale'].update(disabled=True) # disable here if needed
         win['Settings.font_size'].update(disabled=True) # disable here if needed
-        win['Settings.duplicate_gmos'].update(disabled=False)
-        win['Settings.upload_completed'].update(disabled=False)
+        win['Settings.horizontal_layout'].update(disabled=extra_el_disabled)
+        win['Settings.duplicate_gmos'].update(disabled=extra_el_disabled)
+        win['Settings.upload_completed'].update(disabled=extra_el_disabled)
         win['Settings.upload_abi'].update(disabled=True) # disabled for now
-        win['-SETSELORGA-'].update(disabled=False)
-        win['-ADDSELORGA-'].update(disabled=False)
-        win['-COPYFAVORGA-'].update(disabled=False)
+        win['-SETSELORGA-'].update(disabled=extra_el_disabled)
+        win['-ADDSELORGA-'].update(disabled=extra_el_disabled)
+        win['-COPYFAVORGA-'].update(disabled=extra_el_disabled)
 
-### Let PySimpleSQL process its own events! Simple! ###
-    if db.process_events(event, values):
-        logger.info(f'PySimpleDB event handler handled the event {event}!')
-
-    if event == 'plasmidActions.table_insert':
+    elif event == 'plasmidActions.table_insert':
         selected_plasmid=db['Plasmids']['id']
         newname = 'p' + initials + '000'
         newname_input = sg.popup_get_text('Enter the name for the new plasmid', default_text=newname)
@@ -1129,8 +1338,7 @@ while True:
     elif event == '-DUPLICATE-':
         duplicate_plasmid = sg.popup_yes_no('Do you wish to duplicate the plasmid entry?')
         if duplicate_plasmid == 'Yes':
-            l = read_settings()
-            user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13]
+            user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout = read_settings()
             today = date.today()
             selected_plasmid = db['Plasmids']['id']
             connection = sqlite3.connect(database)
@@ -1311,60 +1519,38 @@ while True:
 
 ### autocomplete ###
     # pressing down arrow will trigger event -AIN- then aftewards event Down:
-    elif event == '-ESCAPEKEY-':
-        win['-AIN-'].update('')
-        win['-BOX-CONTAINER-'].update(visible=False)
-    elif event == '-DOWNKEY-' and len(prediction_list): 
-        sel_item = (sel_item + 1) % len(prediction_list)
-        list_element.update(set_to_index=sel_item, scroll_to_index=sel_item)
-    elif event == '-UPKEY-' and len(prediction_list):
-        sel_item = (sel_item + (len(prediction_list) - 1)) % len(prediction_list)
-        list_element.update(set_to_index=sel_item, scroll_to_index=sel_item)
+    elif event == '-LEFTCLICK-': 
+        try:
+            clear_combo_tooltip(ui_handle=active_element)
+            active_element = win.FindElementWithFocus()
+        except:
+            pass
     elif event == '-ENTERKEY-':
-        if len(values['-BOX-']) > 0:
-            win['-AIN-'].update(value=values['-BOX-'])
-            win['-BOX-CONTAINER-'].update(visible=False)
-    elif event == '-AIN-':
-        text = values['-AIN-'] if not values['-IGNORE CASE-'] else values['-AIN-'].lower()
-        if text == input_text:
-            continue
-        else:
-            input_text = text
-        prediction_list = []
-        if text:
-            if values['-IGNORE CASE-']:
-                prediction_list = [item for item in choices if item.lower().startswith(text)]
-            else:
-                prediction_list = [item for item in choices if item.startswith(text)]
-
-        list_element.update(values=prediction_list)
-        sel_item = 0
-        list_element.update(set_to_index=sel_item)
-
-        if len(prediction_list) > 0:
-            win['-BOX-CONTAINER-'].update(visible=True)
-        else:
-            win['-BOX-CONTAINER-'].update(visible=False)
-    elif event == '-BOX-':
-        win['-AIN-'].update(value=values['-BOX-'])
-        win['-BOX-CONTAINER-'].update(visible=False)
+        clear_combo_tooltip(ui_handle=active_element)
+    elif event == '	' or event == '-DOWNKEY-':
+        if active_element.key in autocomp_el_keys:
+            autocomplete(event, values, auto_options=autocomp_options[active_element.key], ui_handle=active_element, space_ref=space_ref, text_len=text_len)
+    elif event == '-DROPDOWN-':
+        if active_element.key in autocomp_el_keys:
+            print("hj")
+            win[values['-DROPDOWN-']].Widget.event_generate('<Down>')
     elif event == '-ADDFEATURE-':
-        selected_dropdown_feature = values['-AIN-']
-        if selected_dropdown_feature[2:-3] in choices: # the truncation of values['-AIN-'][2:-3] is a hack to deal with the shape of 'choices' such as: ('Feature1'),
-            selected_dropdown_feature = selected_dropdown_feature[2:-3]
-        if selected_dropdown_feature == "":
+        selected_feature = values['-AIN-']
+        if selected_feature[2:-3] in choices: # the truncation of values['-AIN-'][2:-3] is a hack to deal with the shape of 'choices' such as: ('Feature1'),
+            selected_feature = selected_feature[2:-3]
+        if selected_feature == "":
             pass
         else:
             variant = '['+values['-VARIANT-']+']'
             if db['Cassettes']['content'] == 'Empty' or db['Cassettes']['content'] == '':
                 if values['-VARIANT-'] != '':
-                    win['Cassettes.content'].update(selected_dropdown_feature + variant)
+                    win['Cassettes.content'].update(selected_feature + variant)
                 else:
-                    win['Cassettes.content'].update(selected_dropdown_feature)
+                    win['Cassettes.content'].update(selected_feature)
             elif values['-VARIANT-'] != '':
-                win['Cassettes.content'].update(db['Cassettes']['content'] + '-' + selected_dropdown_feature + variant)
+                win['Cassettes.content'].update(db['Cassettes']['content'] + '-' + selected_feature + variant)
             else:
-                win['Cassettes.content'].update(db['Cassettes']['content'] + '-' + selected_dropdown_feature)
+                win['Cassettes.content'].update(db['Cassettes']['content'] + '-' + selected_feature)
             db['Cassettes'].save_record(display_message=False)
             win['-AIN-'].update('')
             win['-VARIANT-'].update('')
@@ -1781,7 +1967,7 @@ while True:
 
 ### Info in settings ###
     elif event == '-SETTINGSINFO-':
-        sg.popup(version)
+        sg.popup(appname + ' ' + str(version_no) + ', ' + vdate)
 
     elif event == '-CTRL-E-':
         win['Settings.scale'].update(disabled=False)
@@ -1790,9 +1976,14 @@ while True:
 ### Exit ###
     elif event == sg.WIN_CLOSED or event == 'Exit':
         l = read_settings()
-        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13]
+        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13], l[14]
         sg.user_settings_set_entry('-THEME-', style)
         sg.user_settings_set_entry('-SCALE-', float(scale))
         sg.user_settings_set_entry('-FONTSIZE-', int(font_size))
+        sg.user_settings_set_entry('-HORIZONTAL-', int(horizontal_layout))
         db=None              # <= ensures proper closing of the sqlite database and runs a database optimization
         break
+    else:
+        active_element = win.FindElementWithFocus()
+        if active_element.key in autocomp_el_keys:
+            autocomplete(event, values, auto_options=autocomp_options[active_element.key], ui_handle=active_element, space_ref=space_ref, text_len=text_len)    

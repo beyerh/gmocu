@@ -14,6 +14,10 @@ Alternatively, you may execute the ```gmocu.py``` script file containing the sou
 
 For instructions on installing a local instance of JBEI/ice (optional), see further below.
 
+### Upgrade versions
+
+Download the new [Release]([Releases · beyerh/gmocu · GitHub](https://github.com/beyerh/gmocu/releases)) and replace the previous version with it. GMOCU will resource the date form the GMOCU folder in the user directory and eventually update the database file structure. [Backup](#backup) your data before updating.
+
 ## Usage
 
 ### Video tutorials
@@ -56,17 +60,18 @@ For instructions on installing a local instance of JBEI/ice (optional), see furt
 
 ### Settings
 
-| Setting          | Description                                                                                                                                                                                                                                                                                                                                                                        |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Initials         | Define the user or project initials. Based on the entry, a folder on JBEI/ice will be generated into which plasmid entries will be uploaded. The initials should not and cannot be changed anymore at a later date.                                                                                                                                                                |
-| GMO institute    | Provides governmental information on the GMO facility (Az. and Anlage Nr.) which will appear on the Formblatt-Z.                                                                                                                                                                                                                                                                   |
-| JBEI/ice API     | Generate an API key for a shared JBEI/ice account hosted locally or on the public server. Enter the key. Several accounts can be added to push plasmid data into multiple accounts if desired. See the [video tutorial](#getting-started).                                                                                                                                         |
-| Google Sheet ID  | Google Sheet ID: Upload the glossary file ```GDrive_glossary.xlsx``` to a Google Drive account and make it public. Extract the identifier code from the link and enter. You can also test with this provided example link: ```https://docs.google.com/spreadsheets/d/1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18/edit#gid=1994557483```, Identifier: ```1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18``` |
-| Style            | Visual theme.                                                                                                                                                                                                                                                                                                                                                                      |
-| Duplicate GMOs   | When duplicating a selected plasmid, GMOs will also be copied, however, with the current date. (Default, false).                                                                                                                                                                                                                                                                   |
-| Upload completed | Only upload plasmid entries that were set to the status "Complete". (Default, false).                                                                                                                                                                                                                                                                                              |
-| Target organisms | Define target organisms (working organisms for GMO generation). The organisms must first be present in the organism glossary.                                                                                                                                                                                                                                                      |
-| Fav. organisms   | Select some of the target organisms for generating several GMOs with one click using the ':)' convenience function. All organisms in ```Fav. organisms``` must be present in ```Target organisms```!                                                                                                                                                                               |
+| Setting           | Description                                                                                                                                                                                                                                                                                                                                                                        |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Initials          | Define the user or project initials. Based on the entry, a folder on JBEI/ice will be generated into which plasmid entries will be uploaded. The initials should not and cannot be changed anymore at a later date.                                                                                                                                                                |
+| GMO institute     | Provides governmental information on the GMO facility (Az. and Anlage Nr.) which will appear on the Formblatt-Z.                                                                                                                                                                                                                                                                   |
+| JBEI/ice API      | Generate an API key for a shared JBEI/ice account hosted locally or on the public server. Enter the key. Several accounts can be added to push plasmid data into multiple accounts if desired. See the [video tutorial](#getting-started).                                                                                                                                         |
+| Google Sheet ID   | Google Sheet ID: Upload the glossary file ```GDrive_glossary.xlsx``` to a Google Drive account and make it public. Extract the identifier code from the link and enter. You can also test with this provided example link: ```https://docs.google.com/spreadsheets/d/1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18/edit#gid=1994557483```, Identifier: ```1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18``` |
+| Style             | Visual theme.                                                                                                                                                                                                                                                                                                                                                                      |
+| Horizontal layout | Layout option for small or low resolution screens.                                                                                                                                                                                                                                                                                                                                 |
+| Duplicate GMOs    | When duplicating a selected plasmid, GMOs will also be copied, however, with the current date. (Default, false).                                                                                                                                                                                                                                                                   |
+| Upload completed  | Only upload plasmid entries that were set to the status "Complete". (Default, false).                                                                                                                                                                                                                                                                                              |
+| Target organisms  | Define target organisms (working organisms for GMO generation). The organisms must first be present in the organism glossary.                                                                                                                                                                                                                                                      |
+| Fav. organisms    | Select some of the target organisms for generating several GMOs with one click using the ':)' convenience function. All organisms in ```Fav. organisms``` must be present in ```Target organisms```!                                                                                                                                                                               |
 
 ### Where is all data stored?
 
@@ -115,7 +120,7 @@ Import data from another ```gmocu.db``` file together with the associated nuclei
 
 ### Backup
 
-To backup the database it suffices to copy the ```gmocu.db``` SQLite database file located in the [GMOCU user data directory](#where-is-all-data-stored). The file contains all relevant data. It is possible to store the ```gmocu.db``` file at a location which is synced via a cloud service such as Dropbox. Then, replace the file in the application folder with a soft link to that file. That way, one can work with the same database from different computers. Regular backup is recommended.
+To backup the database it suffices to copy the ```gmocu.db``` SQLite database file located in the [GMOCU user data directory](#where-is-all-data-stored). The file contains all relevant data. Alternatively you may backup the entire GMOCU folder. It is possible to store the ```gmocu.db``` file at a location which is synced via a cloud service such as Dropbox. Then, replace the file in the application folder with a soft link to that file. That way, one can work with the same database from different computers. Regular backups are recommended.
 
 ### Manual data editing
 
@@ -235,6 +240,7 @@ Formatting parameters such as column widths of the generated output ```*.xslx```
 
 ## Resources
 
+- [Wagner C, Urquiza-Garcia U, Zurbriggen MD, Beyer HM. GMOCU: Digital Documentation, Management, and Biological Risk Assessment of Genetic Parts. Adv Biol (Weinh). 2024 Jan 23:e2300529.](https://pubmed.ncbi.nlm.nih.gov/38263723/)
 - [PySimpleSQL](https://github.com/PySimpleSQL)
 - [PySimpleGUI](https://github.com/PySimpleGUI/PySimpleGUI)
 - [ICEbreaker](https://edinburgh-genome-foundry.github.io/icebreaker/)
