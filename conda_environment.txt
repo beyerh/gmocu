@@ -5,4 +5,4 @@ conda config --add channels conda-forge
 conda config --set channel_priority strict
 
 conda install PySimpleGUI pandas Pillow xlsxwriter openpyxl python-levenshtein
-pip install icebreaker pyinstaller==5.13.2
+pip install icebreaker pyinstaller==5.13.2 filebrowser-client

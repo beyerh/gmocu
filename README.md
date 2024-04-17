@@ -60,18 +60,20 @@ Download the new [Release]([Releases · beyerh/gmocu · GitHub](https://github.c
 
 ### Settings
 
-| Setting           | Description                                                                                                                                                                                                                                                                                                                                                                        |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Initials          | Define the user or project initials. Based on the entry, a folder on JBEI/ice will be generated into which plasmid entries will be uploaded. The initials should not and cannot be changed anymore at a later date.                                                                                                                                                                |
-| GMO institute     | Provides governmental information on the GMO facility (Az. and Anlage Nr.) which will appear on the Formblatt-Z.                                                                                                                                                                                                                                                                   |
-| JBEI/ice API      | Generate an API key for a shared JBEI/ice account hosted locally or on the public server. Enter the key. Several accounts can be added to push plasmid data into multiple accounts if desired. See the [video tutorial](#getting-started).                                                                                                                                         |
-| Google Sheet ID   | Google Sheet ID: Upload the glossary file ```GDrive_glossary.xlsx``` to a Google Drive account and make it public. Extract the identifier code from the link and enter. You can also test with this provided example link: ```https://docs.google.com/spreadsheets/d/1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18/edit#gid=1994557483```, Identifier: ```1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18``` |
-| Style             | Visual theme.                                                                                                                                                                                                                                                                                                                                                                      |
-| Horizontal layout | Layout option for small or low resolution screens.                                                                                                                                                                                                                                                                                                                                 |
-| Duplicate GMOs    | When duplicating a selected plasmid, GMOs will also be copied, however, with the current date. (Default, false).                                                                                                                                                                                                                                                                   |
-| Upload completed  | Only upload plasmid entries that were set to the status "Complete". (Default, false).                                                                                                                                                                                                                                                                                              |
-| Target organisms  | Define target organisms (working organisms for GMO generation). The organisms must first be present in the organism glossary.                                                                                                                                                                                                                                                      |
-| Fav. organisms    | Select some of the target organisms for generating several GMOs with one click using the ':)' convenience function. All organisms in ```Fav. organisms``` must be present in ```Target organisms```!                                                                                                                                                                               |
+| Setting            | Description                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Initials           | Define the user or project initials. Based on the entry, a folder on JBEI/ice will be generated into which plasmid entries will be uploaded. The initials should not and cannot be changed anymore at a later date.                                                                                                                                                                |
+| GMO institute      | Provides governmental information on the GMO facility (Az. and Anlage Nr.) which will appear on the Formblatt-Z.                                                                                                                                                                                                                                                                   |
+| Server credentials | Generate an API key for a shared JBEI/ice account hosted locally or on the public server. Enter the key. Several accounts can be added to push plasmid data into multiple accounts if desired. See the [video tutorial](#getting-started). Enter Filebrowser address and user/password information.                                                                                |
+| Google Sheet ID    | Google Sheet ID: Upload the glossary file ```GDrive_glossary.xlsx``` to a Google Drive account and make it public. Extract the identifier code from the link and enter. You can also test with this provided example link: ```https://docs.google.com/spreadsheets/d/1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18/edit#gid=1994557483```, Identifier: ```1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18``` |
+| Style              | Visual theme.                                                                                                                                                                                                                                                                                                                                                                      |
+| Horizontal layout  | Layout option for small or low resolution screens.                                                                                                                                                                                                                                                                                                                                 |
+| Duplicate GMOs     | When duplicating a selected plasmid, GMOs will also be copied, however, with the current date. (Default, false).                                                                                                                                                                                                                                                                   |
+| Upload completed   | Only upload plasmid entries that were set to the status "Complete". (Default, false).                                                                                                                                                                                                                                                                                              |
+| Use JBEI/ice       | Enable uploading to the JBEI/ice instance defined in "Server credentials".                                                                                                                                                                                                                                                                                                         |
+| Use Filebrowser    | Enable uploading to the Filebrowser instance defined in "Server credentials".                                                                                                                                                                                                                                                                                                      |
+| Target organisms   | Define target organisms (working organisms for GMO generation). The organisms must first be present in the organism glossary.                                                                                                                                                                                                                                                      |
+| Fav. organisms     | Select some of the target organisms for generating several GMOs with one click using the ':)' convenience function. All organisms in ```Fav. organisms``` must be present in ```Target organisms```!                                                                                                                                                                               |
 
 ### Where is all data stored?
 
@@ -108,7 +110,11 @@ Check for completeness of the glossaries and duplicates of plasmid entries.
 
 #### JBEI/ice
 
-Upload plasmid entries to JBEI/ice. Each upload will overwrite the information on the server. When ```Only new plasmids``` is checked, GMOCU will only upload entries with plasmid names that do not yet exist in the respective folder on the ICE server. Another way to update the information of a single plasmid, e.g. after editing is by pressing the ```ICE``` button in the top right corner of the ```Plasmid data``` tab. See the [video tutorial](#jbei-ice).
+Upload plasmid entries to JBEI/ice if configured in the Settings. Each upload will overwrite the information on the server. When ```Only new plasmids``` is checked, GMOCU will only upload entries with plasmid names that do not yet exist in the respective folder on the ICE server. Another way to update the information of a single plasmid, e.g. after editing is by pressing the ```ICE``` button in the top right corner of the ```Plasmid data``` tab. See the [video tutorial](#jbei-ice).
+
+#### Filebrowser
+
+Upload plasmid genebank files and any files attached as "Attachement" together with a text file containing plasmid data in a folder tree to a local Filebrowser server (see below for configuration).
 
 #### GMO
 
@@ -183,7 +189,25 @@ In order to reset the OS-dependent automated setting of the font size and scalin
 
 - Create a new user account and setup the access token to use in the GMOCU settings.
 
-### Possible backup solution for docker volumes
+### Install Filebrowser on server
+
+For uploading files including attachments, a [Filebrowser](https://filebrowser.org/) server can be used (e.g. on the same computer running the jBEI/ice server). The installation is very simple (see homepage for instructions for Windows):
+
+```
+curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash
+```
+
+Initiate the Filebrowser instance with:
+
+```bash
+filebrowser config init -r /path/to/folder/on/server -a 134.99.70.14
+
+
+```
+
+Replace the IP address with the static IP of your server or skip ``` -a ip-address``` if you would like to run the server on localhost. Start on boot with ```filebrowser```.
+
+### Possible backup solution for JBEI/ice docker volumes
 
 Install [docker-vackup](https://github.com/BretFisher/docker-vackup).
 
@@ -216,7 +240,7 @@ conda create --name gmocu python=3.9
 conda activate gmocu
 
 conda install PySimpleGUI pandas Pillow xlsxwriter openpyxl python-levenshtein
-pip install icebreaker pyinstaller==5.13.2
+pip install icebreaker pyinstaller==5.13.2 filebrowser-client
 ```
 
 Deploy executable using Pyinstaller:
@@ -244,3 +268,4 @@ Formatting parameters such as column widths of the generated output ```*.xslx```
 - [PySimpleSQL](https://github.com/PySimpleSQL)
 - [PySimpleGUI](https://github.com/PySimpleGUI/PySimpleGUI)
 - [ICEbreaker](https://edinburgh-genome-foundry.github.io/icebreaker/)
+- [Filebrowser-client](https://github.com/chermed/filebrowser-client)

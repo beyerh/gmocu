@@ -114,7 +114,10 @@ CREATE TABLE IceCredentials(
     "alias" TEXT,
 	"ice_instance" TEXT,
 	"ice_token_client" TEXT,
-	"ice_token" TEXT
+	"ice_token" TEXT,
+	"filebrowser_instance" TEXT,
+	"filebrowser_user" TEXT,
+	"filebrowser_pwd" TEXT
 );
 
 INSERT INTO SelectionValues VALUES (1,"Complete");
@@ -123,4 +126,4 @@ INSERT INTO SelectionValues VALUES (3,"Abandoned");
 INSERT INTO SelectionValues VALUES (4,"Planned");
 
 INSERT INTO Settings VALUES (1, 'Name','__','xxx@xxx.com', 'Az.: xxx / Anlage Nr.: xxx', 1, 'ID from link', 0, 0, 0, '__', '__', 'Reddit', 0, 0);
-INSERT INTO IceCredentials VALUES (1, 'ICE-lab.local','https://public-registry.jbei.org/','X-ICE-API-Token-Client', 'X-ICE-API-Token');
+INSERT INTO IceCredentials VALUES (1, 'ICE-lab.local','https://public-registry.jbei.org/','X-ICE-API-Token-Client', 'X-ICE-API-Token', '', '', '');

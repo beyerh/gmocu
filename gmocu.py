@@ -1,12 +1,16 @@
 #!/usr/bin/python3
 
 appname  = 'GMOCU'
-version_no  = float(0.5)
-vdate    = '2024-04-02'
+version_no  = float(0.6)
+vdate    = '2024-04-17'
 database = 'gmocu.db'
 
 # TODO:
-# upload abi sequencing file to ICE
+# upload abi sequencing file to ICE (uploaded to Filebrowser now instead)
+# implement generating GMOs with multiple plasmids
+# edit and share server for features and organisms
+# test ice filebrowser link with ice.set_part_custom_field(filebrowser_link)
+# credentials require extra save button press in Settings
 
 import PySimpleGUI as sg
 import pysimplesqlmod as ss 
@@ -22,6 +26,8 @@ import shutil
 from pathlib import Path
 from datetime import date
 from fuzzywuzzy import process, fuzz
+import asyncio
+from filebrowser_client import FilebrowserClient
 logger=logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)               # <=== You can set the logging level here (NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL)
 
@@ -204,7 +210,7 @@ record_columns=[
 
 selectors=[
     ss.actions('plasmidActions','Plasmids',search_size=(27, 1)) + [sg.Button('', image_data=img2_base64, button_color = (sg.theme_background_color(), sg.theme_background_color()), key='-DUPLICATE-')]+
-    [sg.Button('ICE', key='-THISICE-', size=(3, 1)),],
+    [sg.Button('UP', key='-THISICE-', size=(3, 1)),],
     ss.selector('tableSelector', 'Plasmids', element=sg.Table, headings=headings, visible_column_map=visible,num_rows=plasmid_table_rows), #15 rows
 ]
 
@@ -242,8 +248,9 @@ tablayout_GMO = [
     [sg.Button('Run', key='-CHECKORGANISMS-'),] + [sg.Text('Check Organisms glossary completeness')], 
     [sg.Button('Run', key='-CHECKPLASMIDS-'),] + [sg.Text('Check for plasmid duplications and completeness')],
     [sg.Text('')],
-    [sg.Text('JBEI/ice')], 
+    [sg.Text('JBEI/ice and Filebrowser')], 
     [sg.Button('Run', key='-ICE-')] + [sg.Text('Upload/update all plasmid information and gb files to JBEI/ice')] + [sg.CB('Only new plasmids', default=True, k='-ONLYNEW-')],
+    [sg.Button('Run', key='-FILEBROWSER-')] + [sg.Text('Upload/update all plasmid information, gb files, and attachments to Filebrowser server')],
     [sg.Text('')],
     [sg.Text('GMO')], 
     [sg.Button('Run', key='-PLASMIDLIST-'),] + [sg.Text('Generate plasmid list')],
@@ -276,14 +283,14 @@ tablayout_Features = [
     ], vertical_alignment='top', pad=(0,0))]+
     [sg.Combo(orga_selection, size=(26,10), enable_events=True, key='-FEATURECOMBO-')]+
     ss.record('Features.organism', no_label=True, size=(32,10))]
+
 tablayout_Features_controls = [
     [sg.Button('Export all to Excel', key='-ALLEXCEL-')] +
     [sg.Button('Export used to Excel', key='-USEDEXCEL-')],
     [sg.Button('Replace glossary with Excel file', key='-IMPEXCEL-')]+
     [sg.Button('Add entries from Excel which not yet exist', key='-ADDEXCEL-')],
     [sg.Button('Add entries from Google Sheet which not yet exist', key='-ADDGOOGLE-')]+
-    [sg.Button('!', key='-FEATUREINFO-')],
-    [sg.Text("Input file name: " + os.sep.join([user_data, 'templates', 'nucleic_acid_features.xlsx']))],
+    [sg.Button('!', key='-FEATUREINFO-')]
 ]
 if horizontal_layout == 0:
     tablayout_Features += tablayout_Features_controls
@@ -303,8 +310,7 @@ tablayout_Organisms_controls = [
     [sg.Button('Export used to Excel', key='-USEDEXCELORGA-')],
     [sg.Button('Replace glossary with Excel file', key='-IMPEXCELORGA-')]+
     [sg.Button('Add entries from Excel which not yet exist', key='-ADDEXCELORGA-')],
-    [sg.Button('Add entries from Google Sheet which not yet exist', key='-ADDGOOGLEORGA-')],
-    [sg.Text("Input file name: " + os.sep.join([user_data, 'templates', 'organisms.xlsx']))],
+    [sg.Button('Add entries from Google Sheet which not yet exist', key='-ADDGOOGLEORGA-')]
 ]
 if horizontal_layout == 0:
     tablayout_Organisms += tablayout_Organisms_controls
@@ -317,7 +323,7 @@ tablayout_Settings_1 = [
     ss.record('Settings.initials',label='Initials:', size=(62,10)),
     ss.record('Settings.email',label='Email:', size=(62,10)),
     ss.record('Settings.institution',label='GMO institute:', size=(62,10)),
-    ss.record('Settings.ice',label='JBEI/ice API:', element=sg.Combo, size=(56,10)),
+    ss.record('Settings.ice',label='Server credentials:', element=sg.Combo, size=(56,10)),
     ss.record('Settings.gdrive_glossary',label='Google Sheet ID:', size=(62,10)),
     [sg.Text("Style*:                   ")] + [sg.Col([[sg.Combo(['Reddit', 'DarkBlack', 'Black', 'BlueMono', 'BrownBlue', 'DarkBlue', 'LightBlue', 'LightGrey6'], default_value=sg.user_settings_get_entry('-THEME-', 'Reddit'), size=(60,10), enable_events=True, key='-SETSTYLE-')]], vertical_alignment='t')],
     ss.record('Settings.style',no_label=True, size=(29,10)),   
@@ -330,6 +336,9 @@ tablayout_Settings_2 = [
     ss.record('Settings.duplicate_gmos',label='Duplicate GMOs:', element=sg.CBox),
     ss.record('Settings.upload_completed',label='Upload completed:', element=sg.CBox),
     ss.record('Settings.upload_abi',label='Upload .ab1 files:', element=sg.CBox),
+    ss.record('Settings.use_ice',label='Use JEBI/ice:', element=sg.CBox),
+    ss.record('Settings.use_filebrowser',label='Use Filebrowser:', element=sg.CBox),
+    [sg.Text('*If both JBEI/ice and Filebrowser are used, a link to the Filebrowser folder will be added to each JBEI/ice entry.')],
     [sg.Text('*Restart required')],
 ]
 
@@ -395,6 +404,7 @@ db=ss.Database(database, win,  sql_script=sql_script) #<=== Here is the magic!
 # Maintain db changes in version updates, try altering existing Settings table
 connection = sqlite3.connect(database) 
 cursor = connection.cursor()
+database_was_changed = False
 try:
     db_saved_version = db['Settings']['version']
 except:
@@ -404,13 +414,43 @@ try:
         settings_columns = [i[1] for i in cursor.execute('PRAGMA table_info(Settings)')]
         if not "version" in settings_columns:
             cursor.execute("ALTER TABLE Settings ADD COLUMN version FLOAT DEFAULT 0;")
-            sg.popup('The database file structure has been updated. Please restart GMOCU.')  
+            database_was_changed = True
         if not "horizontal_layout" in settings_columns:
             cursor.execute("ALTER TABLE Settings ADD COLUMN horizontal_layout INTEGER DEFAULT 0;")
+            database_was_changed = True
             if sys.platform == "win32":
                 win['Settings.horizontal_layout'].update(1)
                 db['Settings'].save_record(display_message=False)
-                    
+                cursor.execute("UPDATE Settings SET horizontal_layout = 1;")
+    
+    if db_saved_version < 0.6:
+        credentials_columns = [i[1] for i in cursor.execute('PRAGMA table_info(IceCredentials)')]
+        if not "filebrowser_instance" in credentials_columns:
+            add_columns = ['filebrowser_instance', 'filebrowser_user', 'filebrowser_pwd']
+            for i in add_columns:
+                cursor.execute("ALTER TABLE IceCredentials ADD COLUMN {} TEXT;".format(i))
+            database_was_changed = True
+        settings_columns = [i[1] for i in cursor.execute('PRAGMA table_info(Settings)')]
+        if not "use_ice" in settings_columns:
+            cursor.execute("ALTER TABLE Settings ADD COLUMN use_ice INTEGER DEFAULT 1;")
+            database_was_changed = True
+        if not "use_filebrowser" in settings_columns:
+            cursor.execute("ALTER TABLE Settings ADD COLUMN use_filebrowser INTEGER DEFAULT 1;")
+            database_was_changed = True
+    
+    if database_was_changed:
+        sg.popup('The database file structure has been updated. Please restart GMOCU.')
+        
+        
+    # write current version to db file    
+    if db_saved_version < version_no:
+        if db_saved_version < 0.5:
+            cursor.execute("UPDATE Settings SET version = {};".format(version_no))
+        else:
+            win['Settings.version'].update(version_no)
+            db['Settings'].save_record(display_message=False)    
+    
+                       
 except Exception as e:
     sg.popup(e)
     pass
@@ -419,14 +459,6 @@ finally:
     connection.commit()
     connection.close()
 
-# write current version to db file
-try:
-    if db_saved_version < version_no:
-        win['Settings.version'].update(version_no)
-        db['Settings'].save_record(display_message=False)
-        
-except Exception as e:
-    sg.popup(e)
 
 #db['Plasmids'].set_order_clause('ORDER BY id ASC')
 db['Cassettes'].set_order_clause('ORDER BY cassette_id ASC')
@@ -465,6 +497,8 @@ win['Settings.horizontal_layout'].update(disabled=True)
 win['Settings.duplicate_gmos'].update(disabled=True)
 win['Settings.upload_completed'].update(disabled=True)
 win['Settings.upload_abi'].update(disabled=True)
+win['Settings.use_ice'].update(disabled=True)
+win['Settings.use_filebrowser'].update(disabled=True)
 win['-SETSELORGA-'].update(disabled=True)
 win['-ADDSELORGA-'].update(disabled=True)
 win['-COPYFAVORGA-'].update(disabled=True)
@@ -486,26 +520,31 @@ def read_settings():
     credits = pd.read_sql_query("SELECT * FROM IceCredentials WHERE id = {}".format(ice), connection)
     connection.close()
 
-    user_name           = settings['name'][0]
-    initials            = settings['initials'][0]
-    email               = settings['email'][0]
-    ice                 = settings['ice'][0]
-    institution         = settings['institution'][0]
-    duplicate_gmos      = settings['duplicate_gmos'][0]
-    upload_completed    = settings['upload_completed'][0]
-    upload_abi          = settings['upload_abi'][0]
-    scale               = settings['scale'][0]
-    font_size           = settings['font_size'][0]
-    style               = settings['style'][0]
-    horizontal_layout   = settings['horizontal_layout'][0]    
+    user_name               = settings['name'][0]
+    initials                = settings['initials'][0]
+    email                   = settings['email'][0]
+    ice                     = settings['ice'][0]
+    institution             = settings['institution'][0]
+    duplicate_gmos          = settings['duplicate_gmos'][0]
+    upload_completed        = settings['upload_completed'][0]
+    upload_abi              = settings['upload_abi'][0]
+    scale                   = settings['scale'][0]
+    font_size               = settings['font_size'][0]
+    style                   = settings['style'][0]
+    horizontal_layout       = settings['horizontal_layout'][0]    
 
-    ice_instance        = credits['ice_instance'][0]
-    ice_token           = str(credits['ice_token'][0])
-    ice_token_client    = credits['ice_token_client'][0]
+    ice_instance            = credits['ice_instance'][0]
+    ice_token               = str(credits['ice_token'][0])
+    ice_token_client        = credits['ice_token_client'][0]
+    filebrowser_instance    = credits['filebrowser_instance'][0]
+    filebrowser_user        = credits['filebrowser_user'][0]
+    filebrowser_pwd         = credits['filebrowser_pwd'][0]
+    use_ice                 = settings['use_ice'][0]
+    use_filebrowser         = settings['use_filebrowser'][0]
 
-    return user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout
+    return user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout, filebrowser_instance, filebrowser_user, filebrowser_pwd, use_ice, use_filebrowser
 
-user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout = read_settings()
+user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout, filebrowser_instance, filebrowser_user, filebrowser_pwd, use_ice, use_filebrowser = read_settings()
 
 ### GUI settings ###
 if scale == '__':
@@ -746,141 +785,252 @@ def generate_plasmidlist():
         
     return(pL_data)
 
-def upload_ice(thisice):
+def upload_ice(thisice, use_ice):
 
-    try:
-        l = read_settings()
-        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13], l[14]
-        configuration = dict(
-        root = ice_instance,
-        token = ice_token,
-        client = ice_token_client
-        )
-        ice = icebreaker.IceClient(configuration)
+    if use_ice == 0 and thisice == '':
+        sg.popup('Please enable to use JBEI/ice in the Settings.')
+    else:
 
-        # get all folders
-        ice_folders = ice.get_collection_folders("PERSONAL")
+        try:
+            user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout, filebrowser_instance, filebrowser_user, filebrowser_pwd, use_ice, use_filebrowser = read_settings()
+            configuration = dict(
+            root = ice_instance,
+            token = ice_token,
+            client = ice_token_client
+            )
+            ice = icebreaker.IceClient(configuration)
 
-        folderlist = []
-        folder_ids = []
-        newly_added_plasmids = []
-        for i in ice_folders:
-            folderlist.append(i['folderName'])
-            folder_ids.append(i['id'])
+            # get all folders
+            ice_folders = ice.get_collection_folders("PERSONAL")
 
-        # create folder for user if not existing
-        for a,b in zip(folderlist, folder_ids): # ice.get_folder_id not working?
-            if a == initials:
-                folder_id = b
-        if initials not in folderlist:
-            new_folder = ice.create_folder(initials)
-            folder_id = new_folder['id']
-            folderlist.append(initials)
-            folder_ids.append(folder_id)
+            folderlist = []
+            folder_ids = []
+            newly_added_plasmids = []
+            for i in ice_folders:
+                folderlist.append(i['folderName'])
+                folder_ids.append(i['id'])
 
-        # only get plasmids from user folder not from entire database, faster
-        ice_plasmids = ice.get_folder_entries(folder_id)
-        # or get all plasmids, this will decide if plasmid name duplicated in folders of users can exist. Changing the initials will cause duplications on the server as a new folder will be created.
-        #ice_plasmids = ice.get_collection_entries("PERSONAL")
-        ice_plasmid_names = [p['name'] for p in ice_plasmids]
+            # create folder for user if not existing
+            for a,b in zip(folderlist, folder_ids): # ice.get_folder_id not working?
+                if a == initials:
+                    folder_id = b
+            if initials not in folderlist:
+                new_folder = ice.create_folder(initials)
+                folder_id = new_folder['id']
+                folderlist.append(initials)
+                folder_ids.append(folder_id)
 
-        connection = sqlite3.connect(database)
-        ### condition to overwrite local_plasmids here for THISICE button. Only upload/update the currently selected button.
-        if thisice != '':
-            local_plasmids = pd.read_sql_query("SELECT * FROM Plasmids WHERE name = (?)", connection, params=(thisice,))
-        else:
-            local_plasmids = pd.read_sql_query("SELECT * FROM Plasmids ", connection)
-        status_values = pd.read_sql_query("SELECT * FROM SelectionValues ", connection)
-        cassettes =  pd.read_sql_query("SELECT * FROM Cassettes ", connection)
-        connection.close()
+            # only get plasmids from user folder not from entire database, faster
+            ice_plasmids = ice.get_folder_entries(folder_id)
+            # or get all plasmids, this will decide if plasmid name duplicated in folders of users can exist. Changing the initials will cause duplications on the server as a new folder will be created.
+            #ice_plasmids = ice.get_collection_entries("PERSONAL")
+            ice_plasmid_names = [p['name'] for p in ice_plasmids]
 
-        layout = [[sg.Text('Uploading plasmids...', key="uploader")],
-        [sg.ProgressBar(max_value=len(local_plasmids['id']), orientation='h', size=(20, 20), key='progress')]]
-
-        upwin = sg.Window('ICE Upload', layout, finalize=True)
-        # Get the element to make updating easier
-        progress_bar = upwin['progress']
-        
-        for idx, plasmid in local_plasmids.iterrows():
-            #upwin.Element('uploader').Update('Uploading ' + plasmid['name'])
-            progress_bar.update_bar(idx)
-            if upload_completed == 1 and plasmid['status'] != 1:
-                pass
-            if plasmid['name'] == 'p' + initials + '000' or '(Copy)' in plasmid['name']:
-                sg.popup("Plasmid name '" + plasmid['name'] + "' is not allowed, no upload. Please change the name.")
-                #sg.popup(plasmid['name'], plasmid['status'], ' not completed, no upload')
-
+            connection = sqlite3.connect(database)
+            ### condition to overwrite local_plasmids here for THISICE button. Only upload/update the currently selected button.
+            if thisice != '':
+                local_plasmids = pd.read_sql_query("SELECT * FROM Plasmids WHERE name = (?)", connection, params=(thisice,))
             else:
-                if plasmid['name'] not in ice_plasmid_names: # create plasmid entry 
-                    print('Creating plasmid ' + plasmid['name'] + ' in ICE...')
-                    new = ice.create_plasmid(name=plasmid['name']) #element does somehow not contain the name odnly id but deposits with name, fix below
-                    newly_added_plasmids.append(plasmid['name'])
+                local_plasmids = pd.read_sql_query("SELECT * FROM Plasmids ", connection)
+            status_values = pd.read_sql_query("SELECT * FROM SelectionValues ", connection)
+            cassettes =  pd.read_sql_query("SELECT * FROM Cassettes ", connection)
+            connection.close()
 
-                    new_part_id = new['id'] # fix to get name
-                    fetched_again = ice.get_part_infos(new_part_id)
-                    ice_plasmids.append(fetched_again)
-                    ice_plasmid_names.append(plasmid['name'])
-                    
-                # update index with just created plasmids online, TODO: this takes too much time
-                #ice_plasmids = ice.get_collection_entries("PERSONAL")
-                #ice_plasmid_names = [p['name'] for p in ice_plasmids]
+            layout = [[sg.Text('Uploading plasmids to ICE...', key="uploader")],
+            [sg.ProgressBar(max_value=len(local_plasmids['id']), orientation='h', size=(20, 20), key='progress')]]
+
+            upwin = sg.Window('ICE Upload', layout, finalize=True)
+            # Get the element to make updating easier
+            progress_bar = upwin['progress']
+            
+            for idx, plasmid in local_plasmids.iterrows():
+                #upwin.Element('uploader').Update('Uploading ' + plasmid['name'])
+                progress_bar.update_bar(idx)
+                if upload_completed == 1 and plasmid['status'] != 1:
+                    pass
+                if plasmid['name'] == 'p' + initials + '000' or '(Copy)' in plasmid['name']:
+                    sg.popup("Plasmid name '" + plasmid['name'] + "' is not allowed, no upload. Please change the name.")
+                    #sg.popup(plasmid['name'], plasmid['status'], ' not completed, no upload')
+
+                else:
+                    if plasmid['name'] not in ice_plasmid_names: # create plasmid entry 
+                        print('Creating plasmid ' + plasmid['name'] + ' in ICE...')
+                        new = ice.create_plasmid(name=plasmid['name']) #element does somehow not contain the name odnly id but deposits with name, fix below
+                        newly_added_plasmids.append(plasmid['name'])
+
+                        new_part_id = new['id'] # fix to get name
+                        fetched_again = ice.get_part_infos(new_part_id)
+                        ice_plasmids.append(fetched_again)
+                        ice_plasmid_names.append(plasmid['name'])
+                        
+                    # update index with just created plasmids online, TODO: this takes too much time
+                    #ice_plasmids = ice.get_collection_entries("PERSONAL")
+                    #ice_plasmid_names = [p['name'] for p in ice_plasmids]
 
 
-                addme = False
-                if values['-ONLYNEW-'] == True and plasmid['name'] in newly_added_plasmids:
-                    addme = True
-                elif values['-ONLYNEW-'] == False:
-                    addme = True
-                if thisice != '': # overwrite checkbox setting in case thisice option is used for updating the currently selected plasmid.
-                    addme = True
+                    addme = False
+                    if values['-ONLYNEW-'] == True and plasmid['name'] in newly_added_plasmids:
+                        addme = True
+                    elif values['-ONLYNEW-'] == False:
+                        addme = True
+                    if thisice != '': # overwrite checkbox setting in case thisice option is used for updating the currently selected plasmid.
+                        addme = True
 
-                if plasmid['name'] in ice_plasmid_names and addme == True:
-                    print('Updating plasmid ' + plasmid['name'] + ' in ICE...')
-                    upwin.Element('uploader').Update('Uploading ' + plasmid['name'])
+                    if plasmid['name'] in ice_plasmid_names and addme == True:
+                        print('Updating plasmid ' + plasmid['name'] + ' in ICE...')
+                        upwin.Element('uploader').Update('Uploading ' + plasmid['name'])
 
-                    for ice_p in ice_plasmids:
-                        if plasmid['name'] == ice_p['name']:
-                            d = {"type":"PLASMID",
-                                "alias": plasmid['alias'],
-                                "status": status_values['value'][plasmid['status']-1],
-                                "shortDescription": plasmid['purpose'],
-                                #"bioSafetyLevel": 1,
-                                #"principalInvestigator": '',
-                                #"principalInvestigatorEmail": '',
-                                "creator": user_name,
-                                "creatorEmail": email,
-                                #"selectionMarkers": 'Amp',
-                                "plasmidData": {
-                                    "backbone": plasmid['backbone_vector'],
-                                    "circular": "true"}}
+                        for ice_p in ice_plasmids:
+                            if plasmid['name'] == ice_p['name']:
+                                d = {"type":"PLASMID",
+                                    "alias": plasmid['alias'],
+                                    "status": status_values['value'][plasmid['status']-1],
+                                    "shortDescription": plasmid['purpose'],
+                                    #"bioSafetyLevel": 1,
+                                    #"principalInvestigator": '',
+                                    #"principalInvestigatorEmail": '',
+                                    "creator": user_name,
+                                    "creatorEmail": email,
+                                    #"selectionMarkers": 'Amp',
+                                    "plasmidData": {
+                                        "backbone": plasmid['backbone_vector'],
+                                        "circular": "true"}}
 
-                            ice.request("PUT","parts/"+str(ice_p['id']), data=d)
+                                ice.request("PUT","parts/"+str(ice_p['id']), data=d)
 
-                            ice.set_part_custom_field(ice_p['id'], 'Clone', plasmid['clone'])
-                            ice.set_part_custom_field(ice_p['id'], 'Cloning', plasmid['summary'])
-                            ice.set_part_custom_field(ice_p['id'], 'Entry date', plasmid['date'])
+                                ice.set_part_custom_field(ice_p['id'], 'Clone', plasmid['clone'])
+                                ice.set_part_custom_field(ice_p['id'], 'Cloning', plasmid['summary'])
+                                ice.set_part_custom_field(ice_p['id'], 'Entry date', plasmid['date'])
 
-                            # add all cassettes as custom fields
-                            my_cassettes = cassettes[cassettes['plasmid_id']==plasmid['id']]['content']
-                            for idx, cassette in enumerate(my_cassettes):
-                                ice.set_part_custom_field(ice_p['id'], 'Cassette {}'.format(idx+1), cassette)
+                                # add all cassettes as custom fields
+                                my_cassettes = cassettes[cassettes['plasmid_id']==plasmid['id']]['content']
+                                for idx, cassette in enumerate(my_cassettes):
+                                    ice.set_part_custom_field(ice_p['id'], 'Cassette {}'.format(idx+1), cassette)
+                                
+                                # create link if Filbrowser is used as well (unfortunately not clickable)
+                                if use_filebrowser == 1:
+                                    filebrowser_link = os.sep.join([filebrowser_instance, initials, ice_p['name']])
+                                    ice.set_part_custom_field(ice_p['id'], 'Filebrowser link', filebrowser_link)
 
-                            if plasmid['genebank'] != '':
-                                try:
-                                    ice.delete_part_record(ice_p['id'])
-                                except:
-                                    pass
-                                ice.attach_record_to_part(ice_part_id=ice_p['id'], filename=plasmid['name'] + '.gb', record_text=plasmid['genebank'])
-                            
-                            ice.add_to_folder([ice_p['id']], folders_ids=[folder_id])
+                                if plasmid['genebank'] != '':
+                                    try:
+                                        ice.delete_part_record(ice_p['id'])
+                                    except:
+                                        pass
+                                    ice.attach_record_to_part(ice_part_id=ice_p['id'], filename=plasmid['name'] + '.gb', record_text=plasmid['genebank'])
+                                
+                                ice.add_to_folder([ice_p['id']], folders_ids=[folder_id])
 
-        upwin.close()
-        sg.popup('Upload completed.')
+            upwin.close()
+            sg.popup('Upload completed.')
 
-    except Exception as e:
-        sg.popup(e)
+        except Exception as e:
+            sg.popup(e)
 
-def add_oragnism(organism_index):
+def upload_filebrowser(thisfile, use_filebrowser):
+
+    if use_filebrowser == 0 and thisfile == '':
+        sg.popup('Please enable to use Filebrowser in the Settings.')
+    else:
+        if None or '' in (filebrowser_instance, filebrowser_user, filebrowser_pwd):
+            sg.popup('Please enter the Filebrowser server information and save the Settings tab or restart GMOCU.')
+        else:
+            try:
+                connection = sqlite3.connect(database)
+                ### condition to overwrite local_plasmids here for THISICE button. Only upload/update the currently selected button.
+                if thisfile != '':
+                    local_plasmids = pd.read_sql_query("SELECT * FROM Plasmids WHERE name = (?)", connection, params=(thisfile,))
+                else:
+                    local_plasmids = pd.read_sql_query("SELECT * FROM Plasmids ", connection)
+                status_values = pd.read_sql_query("SELECT * FROM SelectionValues ", connection)
+                cassettes =  pd.read_sql_query("SELECT * FROM Cassettes ", connection)
+
+                layout = [[sg.Text('Uploading plasmids to Filebrowser...', key="uploader")],
+                [sg.ProgressBar(max_value=len(local_plasmids['id']), orientation='h', size=(20, 20), key='progress')]]
+
+                upwin = sg.Window('ICE Upload', layout, finalize=True)
+                # Get the element to make updating easier
+                progress_bar = upwin['progress']
+                
+                # Make local folder to collect data to upload, rename existing to backup location
+                if thisfile != '':
+                    path = os.sep.join([user_data, initials, thisfile])
+                else:
+                    path = os.sep.join([user_data, initials])
+                if os.path.isdir(path):  # delete folder if it exists already
+                    shutil.rmtree(path) 
+
+                Path(path).mkdir(parents=True, exist_ok=True) # create folder if not existing
+
+                for idx, plasmid in local_plasmids.iterrows():
+                    #upwin.Element('uploader').Update('Uploading ' + plasmid['name'])
+                    progress_bar.update_bar(idx)
+                    if plasmid['name'] == 'p' + initials + '000' or '(Copy)' in plasmid['name']:
+                        sg.popup("Plasmid name '" + plasmid['name'] + "' is not allowed, no upload. Please change the name.")
+                        #sg.popup(plasmid['name'], plasmid['status'], ' not completed, no upload')
+
+                    else:
+                        print('Saving local plasmid data ' + plasmid['name'] + ' for Filebrowser...')
+                        # Make subfolder for each plasmid
+                        subfolder_path = os.sep.join([path,  plasmid['name']])
+                        Path(subfolder_path).mkdir(parents=True, exist_ok=True)
+
+                        upwin.Element('uploader').Update('Saving ' + plasmid['name'])
+                        
+                        data =  "\n".join([
+                            'Plasmid name: ' + plasmid['name'],
+                            'Clone: ' + plasmid['clone'],
+                            'Alias: ' + plasmid['alias'],
+                            'Status: ' + status_values['value'][plasmid['status']-1],
+                            'Short description: ' + plasmid['purpose'],
+                            'Cloning: ' + plasmid['summary'],
+                            'Backbone: ' + plasmid['backbone_vector'],
+                            'Creator: ' + user_name,
+                            'Creator email: ' + email,
+                            'Entry date: ' + plasmid['date']                    
+                            ])
+                        
+                        my_cassettes = cassettes[cassettes['plasmid_id']==plasmid['id']]['content']
+                        for idx, cassette in enumerate(my_cassettes):
+                            data = "\n".join([data, 'Cassette {}: '.format(idx+1) + cassette])
+                            #ice.set_part_custom_field(ice_p['id'], 'Cassette {}'.format(idx+1), cassette)
+
+                        with open(os.sep.join([subfolder_path, plasmid['name'] + ".txt"]), "w") as text_file:
+                            text_file.write(data)
+
+                        with open(os.sep.join([subfolder_path, plasmid['name'] + ".gb"]), "w") as gb_file:
+                            gb_file.write(plasmid['genebank'])
+
+                        attachemtent_ids = pd.read_sql_query('SELECT attach_id, Filename FROM Attachments WHERE plasmid_id = {}'.format(plasmid['id']), connection)
+                        for idx, row in  attachemtent_ids.iterrows():
+                            readBlobData(row['attach_id'], row['Filename'], subfolder_path)
+                
+                # Upload to filebrowser server given in the settings
+                client = FilebrowserClient(filebrowser_instance, filebrowser_user, filebrowser_pwd)
+                asyncio.run(client.connect())
+
+                if thisfile != '':
+                    deletepath = os.sep.join([initials, thisfile])
+                else:
+                    deletepath = initials
+
+                try:
+                    asyncio.run(client.delete(deletepath))
+                except:
+                    pass
+                
+                asyncio.run(client.upload(path, initials, override=True))
+
+                upwin.close()
+                sg.popup('Upload to Filebrowser server completed completed.')
+
+            except Exception as e:
+                sg.popup(e)
+            
+            finally:
+                connection.close()
+
+def add_organism(organism_index):
     selected_organism_index = organism_index
     choosen_target_RG = db['Plasmids']['target_RG']
     approval = values['-APPROVAL-']
@@ -903,6 +1053,8 @@ def add_oragnism(organism_index):
 def import_data():
 
     file = sg.popup_get_file("Select file")
+    if not file:
+        return
     connection = sqlite3.connect(database, timeout=60)
     cursor = connection.cursor()
     existing_plasmids = pd.read_sql_query("SELECT name, id FROM Plasmids", connection)
@@ -1062,7 +1214,6 @@ def import_data():
 
     except Exception as e:
         sg.popup(e)
-        pass
 
 def check_plasmids():
     try:
@@ -1213,8 +1364,12 @@ def autocomplete(event: str, event_data: dict[str, str], auto_options: list[str]
         show_combo_tooltip(ui_handle=ui_handle, tooltip=sym, space_ref=space_ref, text_len=text_len)
 
 autocomp_el_keys = ['-AIN-', '-FEATURECOMBO-']
-autocomp_options = {'-AIN-': {'values': choices, 'show_on_empty': False}, 
-                    '-FEATURECOMBO-': {'values': orga_selection, 'show_on_empty': True}}
+autocomp_options = {}
+def refresh_autocomp_options():
+    global autocomp_options
+    autocomp_options = {'-AIN-': {'values': choices, 'show_on_empty': False}, 
+                        '-FEATURECOMBO-': {'values': orga_selection, 'show_on_empty': True}}
+refresh_autocomp_options()
 active_element = win[[i for i in win.AllKeysDict.keys()][0]]
 active_element.set_focus()  
 space_ref = win['-SPACEREF-']
@@ -1241,7 +1396,7 @@ check_features()
 check_organisms()
 while True:
     event, values = win.read()
-    #print('event:', event)
+    print('event:', event)
     for key in autocomp_el_keys:
         clear_combo_tooltip(ui_handle=win[key])
     #print('values:', values)
@@ -1266,16 +1421,15 @@ while True:
         corrected_value = corrected_value.replace(']', ')')
         win['Features.annotation'].update(corrected_value)
         choices = autocomp()
+        refresh_autocomp_options()
     elif event == 'settingsActions.db_save':
         db['Settings'].save_record(display_message=False)
-        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout = read_settings()
+        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout, filebrowser_instance, filebrowser_user, filebrowser_pwd, use_ice, use_filebrowser = read_settings()
         sg.user_settings_set_entry('-THEME-', (values['Settings.style']))
         sg.user_settings_set_entry('-SCALE-', (values['Settings.scale']))
         sg.user_settings_set_entry('-FONTSIZE-', (values['Settings.font_size']))
         win['Settings.style'].update(disabled=True) # not a perfect solution
-        win['Settings.style'].update(value=values['-SETSTYLE-'])
-    elif event == 'insElement':
-        db['Plasmids'].save_record(display_message=False)  
+        win['Settings.style'].update(value=values['-SETSTYLE-']) 
     elif event in ['settingsActions.edit_protect', 'featureActions.edit_protect', 'plasmidActions.edit_protect']:
         # enable extra elements
         extra_el_disabled = not extra_el_disabled
@@ -1309,6 +1463,8 @@ while True:
         win['Settings.duplicate_gmos'].update(disabled=extra_el_disabled)
         win['Settings.upload_completed'].update(disabled=extra_el_disabled)
         win['Settings.upload_abi'].update(disabled=True) # disabled for now
+        win['Settings.use_ice'].update(disabled=extra_el_disabled)
+        win['Settings.use_filebrowser'].update(disabled=extra_el_disabled)
         win['-SETSELORGA-'].update(disabled=extra_el_disabled)
         win['-ADDSELORGA-'].update(disabled=extra_el_disabled)
         win['-COPYFAVORGA-'].update(disabled=extra_el_disabled)
@@ -1323,14 +1479,17 @@ while True:
 
     elif event == 'featureActions.table_delete':
         choices = autocomp()
+        refresh_autocomp_options()
 
     elif event == 'organismActions.table_delete':
         orga_selection = select_orga()
+        refresh_autocomp_options()
         win['-FEATURECOMBO-'].Update(values = orga_selection)
         win['-SETSELORGA-'].Update(values = orga_selection)
 
     elif event == 'organismActions.db_save':
         orga_selection = select_orga()
+        refresh_autocomp_options()
         win['-FEATURECOMBO-'].Update(values = orga_selection)
         win['-SETSELORGA-'].Update(values = orga_selection)
 
@@ -1338,7 +1497,7 @@ while True:
     elif event == '-DUPLICATE-':
         duplicate_plasmid = sg.popup_yes_no('Do you wish to duplicate the plasmid entry?')
         if duplicate_plasmid == 'Yes':
-            user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout = read_settings()
+            user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout, filebrowser_instance, filebrowser_user, filebrowser_pwd, use_ice, use_filebrowser = read_settings()
             today = date.today()
             selected_plasmid = db['Plasmids']['id']
             connection = sqlite3.connect(database)
@@ -1374,15 +1533,19 @@ while True:
 ### GMOs ###
     elif event == '-THISICE-':
         thisice = db['Plasmids']['name']
-        upload = sg.popup_yes_no('Updating plasmid {} on ICE. Proceed?'.format(thisice))
+        upload = sg.popup_yes_no('Updating plasmid {} on servers. Proceed?'.format(thisice))
         if upload == 'Yes':
-            upload_ice(thisice)
+            if use_ice == 1:
+                upload_ice(thisice, use_ice=use_ice)
+            if use_filebrowser == 1:
+                upload_filebrowser(thisfile=thisice, use_filebrowser=use_filebrowser)
+
     elif event == '-ADDORGA-':
         try:
             db['Plasmids'].save_record(display_message=False)
             selected_plasmid = db['Plasmids']['id']
             organism_index = db['Plasmids']['organism_selector']
-            add_oragnism(organism_index)
+            add_organism(organism_index)
 
         except TypeError:
             sg.popup("Choose an organism.")
@@ -1408,7 +1571,7 @@ while True:
                     for idx, fav in favs.iterrows():
                         cursor.execute("SELECT orga_sel_id FROM OrganismSelection WHERE organism_name = ?", (fav['organism_fav_name'],))
                         orga_id = cursor.fetchone()[0]
-                        add_oragnism(orga_id)
+                        add_organism(orga_id)
             except Exception as e:
                 sg.popup(e)
             finally:
@@ -1438,6 +1601,7 @@ while True:
 
 ### Attachments ###
     elif event == 'insElement':
+        db['Plasmids'].save_record(display_message=False)
         selected_plasmid = db['Plasmids']['id']
         db['Plasmids'].set_by_pk(selected_plasmid)
         attachment_path = sg.popup_get_file('Select a file')
@@ -1522,7 +1686,13 @@ while True:
     elif event == '-LEFTCLICK-': 
         try:
             clear_combo_tooltip(ui_handle=active_element)
-            active_element = win.FindElementWithFocus()
+        except:
+            pass
+        try:
+            active_element = win.FindElementWithFocus() 
+            if active_element.key in ['cassettesSelector', 'gmoSelector', 'attachmentSelector', 'organismselectionSelector', 'favouritesSelector']:
+                win.write_event_value(active_element.key, values[active_element.key])
+                active_element.block_focus()
         except:
             pass
     elif event == '-ENTERKEY-':
@@ -1682,80 +1852,65 @@ while True:
             sg.popup('There must be more than one element in the list in order to use the export function.')
 
     elif event == '-IMPEXCEL-':
-        try:
-            wb = pd.read_excel(os.sep.join([user_data, 'templates', 'nucleic_acid_features.xlsx']), sheet_name = 0)
-            connection = sqlite3.connect(database)
-            cursor = connection.cursor()
-            cursor.execute("DELETE FROM Features")
-            cursor.execute("DELETE from sqlite_sequence where name='Features'")
-            connection.commit()
-            wb['annotation'] = wb['annotation'].replace('-', '_', regex=True)
-            wb['annotation'] = wb['annotation'].replace('\[', '(', regex=True)
-            wb['annotation'] = wb['annotation'].replace(']', ')', regex=True)
-            wb  = wb.fillna(value='None')
-            wb.to_sql(name='Features',con=connection,if_exists='append', index=False, index_label='id')
-            connection.commit()
-            connection.close()
-            db['Features'].save_record(display_message=False)
-            #problem here, table does not refresh, solution hack:
-            #db['Features'].insert_record()
-            #db['Features'].delete_record(ask=False)
-            #better:
-            db['Features'].requery()
-            choices = autocomp()
-        except FileNotFoundError:
-            sg.popup("File " + os.sep.join([user_data, 'templates', 'nucleic_acid_features.xlsx']) + " does not exist. You might have to rename it.")
-        else:
-            source_dir = os.sep.join([user_data, 'templates'])
+        file = sg.popup_get_file("Select file")
+        if file:
             try:
-                os.unlink(os.path.join(source_dir, "nucleic_acid_features_imported.xlsx"))
-            except OSError:
-                pass
-            os.rename(os.path.join(source_dir, 'nucleic_acid_features.xlsx'), os.path.join(source_dir, "nucleic_acid_features_imported.xlsx"))
-            sg.popup('nucleic_acid_features.xlsx was renamed to nucleic_acid_features_imported.xlsx')
+                wb = pd.read_excel(file, sheet_name = 0)
+                connection = sqlite3.connect(database)
+                cursor = connection.cursor()
+                cursor.execute("DELETE FROM Features")
+                cursor.execute("DELETE from sqlite_sequence where name='Features'")
+                connection.commit()
+                wb['annotation'] = wb['annotation'].replace('-', '_', regex=True)
+                wb['annotation'] = wb['annotation'].replace('\[', '(', regex=True)
+                wb['annotation'] = wb['annotation'].replace(']', ')', regex=True)
+                wb  = wb.fillna(value='None')
+                wb.to_sql(name='Features',con=connection,if_exists='append', index=False, index_label='id')
+                connection.commit()
+                connection.close()
+                db['Features'].save_record(display_message=False)
+                #problem here, table does not refresh, solution hack:
+                #db['Features'].insert_record()
+                #db['Features'].delete_record(ask=False)
+                #better:
+                db['Features'].requery()
+                choices = autocomp()
+                refresh_autocomp_options()
+            except FileNotFoundError:
+                sg.popup("File " + file + " does not exist. You might have to rename it.")
+                
     elif event == '-IMPEXCELORGA-':
-        try:
-            wb = pd.read_excel(os.sep.join([user_data, 'templates', 'organisms.xlsx']), sheet_name = 0)
-            connection = sqlite3.connect(database)
-            cursor = connection.cursor()
-            cursor.execute("DELETE FROM Organisms")
-            cursor.execute("DELETE from sqlite_sequence where name='Organisms'")
-            connection.commit()
-            wb.to_sql(name='Organisms',con=connection,if_exists='append', index=False, index_label='id')
-            connection.commit()
-            connection.close()
-            db['Organisms'].save_record(display_message=False)
-            db['Organisms'].requery()
-            orga_selection = select_orga()
-            win['-FEATURECOMBO-'].Update(values = orga_selection)
-            win['-SETSELORGA-'].Update(values = orga_selection)
-        except FileNotFoundError:
-            sg.popup("File " + os.sep.join([user_data, 'templates', 'organisms.xlsx']) + " does not exist. You might have to rename it.")
-        else:
-            source_dir = os.sep.join([user_data, 'templates'])
+        file = sg.popup_get_file("Select file")
+        if file:
             try:
-                os.unlink(os.path.join(source_dir, 'organisms_imported.xlsx'))
-            except OSError:
-                pass
-            os.rename(os.path.join(source_dir, 'organisms.xlsx'), os.path.join(source_dir, 'organisms_imported.xlsx'))
-            sg.popup('File organisms.xlsx was renamed to organisms_imported.xlsx')
+                wb = pd.read_excel(file, sheet_name = 0)
+                connection = sqlite3.connect(database)
+                cursor = connection.cursor()
+                cursor.execute("DELETE FROM Organisms")
+                cursor.execute("DELETE from sqlite_sequence where name='Organisms'")
+                connection.commit()
+                wb.to_sql(name='Organisms',con=connection,if_exists='append', index=False, index_label='id')
+                connection.commit()
+                connection.close()
+                db['Organisms'].save_record(display_message=False)
+                db['Organisms'].requery()
+                orga_selection = select_orga()
+                refresh_autocomp_options()
+                win['-FEATURECOMBO-'].Update(values = orga_selection)
+                win['-SETSELORGA-'].Update(values = orga_selection)
+            except FileNotFoundError:
+                sg.popup("File " + file + " does not exist. You might have to rename it.")
 
     elif event == '-ADDEXCEL-':
-        #TODO: file browse
-        try:
-            wb = pd.read_excel(os.sep.join([user_data, 'templates', 'nucleic_acid_features.xlsx']), sheet_name = 0)
-            add_to_features(wb)
-            choices = autocomp()
-        except FileNotFoundError:
-            sg.popup("File " + os.sep.join([user_data, 'templates', 'nucleic_acid_features.xlsx']) + " does not exist. You might have to rename it.")
-        else:
-            source_dir = os.sep.join([user_data, 'templates'])
+        file = sg.popup_get_file("Select file")
+        if file:
             try:
-                os.unlink(os.path.join(source_dir, 'nucleic_acid_features_imported.xlsx'))
-            except OSError:
-                pass
-            os.rename(os.path.join(source_dir, 'nucleic_acid_features.xlsx'), os.path.join(source_dir, "nucleic_acid_features_imported.xlsx"))
-            sg.popup('File nucleic_acid_features.xlsx was renamed to nucleic_acid_features_imported.xlsx')
+                wb = pd.read_excel(file, sheet_name = 0)
+                add_to_features(wb)
+                choices = autocomp()
+                refresh_autocomp_options()
+            except FileNotFoundError:
+                sg.popup("File " + file + " does not exist. You might have to rename it.")
 
     elif event == '-ADDGOOGLE-':
         try:
@@ -1767,29 +1922,24 @@ while True:
             wb = pd.read_csv(url)
             add_to_features(wb)
             choices = autocomp()
+            refresh_autocomp_options()
         except Exception as e:
             sg.popup(e)
 
     elif event == '-ADDEXCELORGA-': 
-        #TODO: file browse
-        try:
-            wb = pd.read_excel(os.sep.join([user_data, 'templates', 'organisms.xlsx']), sheet_name = 0)
-            add_to_organisms(wb)
-            orga_selection = select_orga()
-            win['-FEATURECOMBO-'].Update(values = orga_selection)
-            win['-SETSELORGA-'].Update(values = orga_selection)
-        except FileNotFoundError:
-            sg.popup("File " + os.sep.join([user_data, 'templates', 'organisms.xlsx']) + " does not exist. You might have to rename it.")
-        except Exception as e:
-            sg.popup(e)
-        else:
-            source_dir = os.sep.join([user_data, 'templates'])
+        file = sg.popup_get_file("Select file")
+        if file:
             try:
-                os.unlink(os.path.join(source_dir, 'organisms_imported.xlsx'))
-            except OSError:
-                pass
-            os.rename(os.path.join(source_dir, 'organisms.xlsx'), os.path.join(source_dir, 'organisms_imported.xlsx'))
-            sg.popup('File organisms.xlsx was renamed to organisms_imported.xlsx')
+                wb = pd.read_excel(file, sheet_name = 0)
+                add_to_organisms(wb)
+                orga_selection = select_orga()
+                refresh_autocomp_options()
+                win['-FEATURECOMBO-'].Update(values = orga_selection)
+                win['-SETSELORGA-'].Update(values = orga_selection)
+            except FileNotFoundError:
+                sg.popup("File " + file + " does not exist. You might have to rename it.")
+            except Exception as e:
+                sg.popup(e)
 
     elif event == '-ADDGOOGLEORGA-':
         try:
@@ -1800,6 +1950,7 @@ while True:
             add_to_organisms(wb)
             choices = autocomp()
             orga_selection = select_orga()
+            refresh_autocomp_options()
             win['-FEATURECOMBO-'].Update(values = orga_selection)
             win['-SETSELORGA-'].Update(values = orga_selection)
         except Exception as e:
@@ -1809,11 +1960,13 @@ while True:
         sg.popup('Dashes and brackets "-, [, ]" in annotation names are not allowed and will be replaces by underscores and parentheses "_, (, )".')
     elif event == '-FEATURECOMBO-':
             orga_selection = select_orga()
+            refresh_autocomp_options()
             win['-FEATURECOMBO-'].Update(values = orga_selection)
             win['Features.organism'].update(disabled=True) # not a perfect solution
             win['Features.organism'].update(value=values['-FEATURECOMBO-'])
     elif event == '-ADDSELORGA-':
             orga_selection = select_orga()
+            refresh_autocomp_options()
             win['-SETSELORGA-'].Update(values = orga_selection)
             if values['-SETSELORGA-'] != '':
                 value="'{}'".format(values['-SETSELORGA-'])
@@ -1857,11 +2010,17 @@ while True:
         else:
             sg.popup('All good!')
 
-### Upload to ICE ###
+### Upload to ICE###
     elif event == '-ICE-':
-        upload = sg.popup_yes_no('Dependind on the database size and internet connection it may take some time. Proceed?')
+        upload = sg.popup_yes_no('Dependind on the database size and network connection it may take some time. Proceed?')
         if upload == 'Yes':
-            upload_ice(thisice='')
+            upload_ice(thisice='', use_ice=use_ice)
+
+### Upload to Filebrowser###
+    elif event == '-FILEBROWSER-':
+        upload = sg.popup_yes_no('Dependind on the database size and network connection it may take some time. Proceed?')
+        if upload == 'Yes':
+            upload_filebrowser(thisfile='', use_filebrowser=use_filebrowser)
 
 ### Formblatt Z ###
     elif event == '-FORMBLATT-':
@@ -1962,6 +2121,7 @@ while True:
         db=ss.Database(database, win,  sql_script=sql_script)
         choices = autocomp()
         orga_selection = select_orga()
+        refresh_autocomp_options()
         win['-FEATURECOMBO-'].Update(values = orga_selection)
         win['-SETSELORGA-'].Update(values = orga_selection)
 
@@ -1975,8 +2135,7 @@ while True:
 
 ### Exit ###
     elif event == sg.WIN_CLOSED or event == 'Exit':
-        l = read_settings()
-        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout = l[0], l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8], l[9], l[10], l[11], l[12], l[13], l[14]
+        user_name, initials, email, institution, ice, duplicate_gmos, upload_completed, upload_abi, scale, font_size, style, ice_instance, ice_token, ice_token_client, horizontal_layout, filebrowser_instance, filebrowser_user, filebrowser_pwd, use_ice, use_filebrowser = read_settings()
         sg.user_settings_set_entry('-THEME-', style)
         sg.user_settings_set_entry('-SCALE-', float(scale))
         sg.user_settings_set_entry('-FONTSIZE-', int(font_size))
@@ -1985,5 +2144,5 @@ while True:
         break
     else:
         active_element = win.FindElementWithFocus()
-        if active_element.key in autocomp_el_keys:
+        if active_element and active_element.key in autocomp_el_keys:
             autocomplete(event, values, auto_options=autocomp_options[active_element.key], ui_handle=active_element, space_ref=space_ref, text_len=text_len)    
