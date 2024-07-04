@@ -79,15 +79,19 @@ CREATE TABLE Features(
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "annotation" TEXT,
 	"alias" TEXT,
-	"risk" TEXT DEFAULT 'None',
-	"organism" TEXT
+	"risk" TEXT DEFAULT 'No Risk',
+	"organism" TEXT,
+	"uid" CHAR(16) NOT NULL DEFAULT (lower(hex(randomblob(16)))),
+	"synced" INTEGER DEFAULT 0
 );
 
 CREATE TABLE Organisms(
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "full_name" TEXT,
 	"short_name" TEXT, 
-	"RG" TEXT
+	"RG" TEXT,
+	"uid" CHAR(16) NOT NULL DEFAULT (lower(hex(randomblob(16)))),
+	"synced" INTEGER DEFAULT 0
 );
 
 CREATE TABLE Settings(
@@ -104,8 +108,14 @@ CREATE TABLE Settings(
 	"scale" FLOAT DEFAULT 1,
 	"font_size" INTEGER DEFAULT 13,
 	"style" TEXT DEFAULT 'Reddit',
-	"horizontal_layout" INTEGER DEFAULT 0,
+	"horizontal_layout" INTEGER DEFAULT 1,
 	"version" FLOAT DEFAULT 0,
+	"use_ice" INTEGER DEFAULT 0,
+	"use_filebrowser" INTEGER DEFAULT 0,
+	"use_gdrive" INTEGER DEFAULT 0,
+	"gdrive_id" TEXT DEFAULT 'ID from link',
+	"zip_files" INTEGER DEFAULT 1,
+	"autosync" INTEGER DEFAULT 0,
 	FOREIGN KEY(ice) REFERENCES IceCredentials(id)
 );
 
@@ -125,5 +135,5 @@ INSERT INTO SelectionValues VALUES (2,"In Progress");
 INSERT INTO SelectionValues VALUES (3,"Abandoned");
 INSERT INTO SelectionValues VALUES (4,"Planned");
 
-INSERT INTO Settings VALUES (1, 'Name','__','xxx@xxx.com', 'Az.: xxx / Anlage Nr.: xxx', 1, 'ID from link', 0, 0, 0, '__', '__', 'Reddit', 0, 0);
+INSERT INTO Settings VALUES (1, 'Name','__','xxx@xxx.com', 'Az.: xxx / Anlage Nr.: xxx', 1, 'ID from link', 0, 0, 0, '__', '__', 'Reddit', 1, 0, 0, 0, 0, 'ID from link', 1, 0);
 INSERT INTO IceCredentials VALUES (1, 'ICE-lab.local','https://public-registry.jbei.org/','X-ICE-API-Token-Client', 'X-ICE-API-Token', '', '', '');

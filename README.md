@@ -16,11 +16,13 @@ For instructions on installing a local instance of JBEI/ice (optional), see furt
 
 ### Upgrade versions
 
-Download the new [Release]([Releases · beyerh/gmocu · GitHub](https://github.com/beyerh/gmocu/releases)) and replace the previous version with it. GMOCU will resource the date form the GMOCU folder in the user directory and eventually update the database file structure. [Backup](#backup) your data before updating.
+Download the new [Release]([Releases · beyerh/gmocu · GitHub](https://github.com/beyerh/gmocu/releases)) and replace the previous version with it. GMOCU will resource the data from the [GMOCU user data folder](#where-is-all-data-stored) in the user directory and eventually update the database file structure. [Backup](#backup) your data before updating.
 
 ## Usage
 
 ### Video tutorials
+
+Note: The video tutorials are based on GMOCU version 0.4 and do not reflect the current software state.
 
 <details>
   <summary>Software download and installation</summary>
@@ -31,7 +33,7 @@ Download the new [Release]([Releases · beyerh/gmocu · GitHub](https://github.c
 <details>
   <summary>Getting started and importing a glossary</summary>
   <a name="getting-started"></a>
-  <video src='https://github.com/beyerh/gmocu/assets/116307465/b0057bca-9b67-4771-bcc1-b4d5871266bd.mp4' />
+  <video src='https://github.com/beyerh/gmocu/assets/116307465/2e7dbd91-90cc-4a8d-98df-a48982e77f64.mp4' />
 </details>
 
 <details>
@@ -60,20 +62,24 @@ Download the new [Release]([Releases · beyerh/gmocu · GitHub](https://github.c
 
 ### Settings
 
-| Setting            | Description                                                                                                                                                                                                                                                                                                                                                                        |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Initials           | Define the user or project initials. Based on the entry, a folder on JBEI/ice will be generated into which plasmid entries will be uploaded. The initials should not and cannot be changed anymore at a later date.                                                                                                                                                                |
-| GMO institute      | Provides governmental information on the GMO facility (Az. and Anlage Nr.) which will appear on the Formblatt-Z.                                                                                                                                                                                                                                                                   |
-| Server credentials | Generate an API key for a shared JBEI/ice account hosted locally or on the public server. Enter the key. Several accounts can be added to push plasmid data into multiple accounts if desired. See the [video tutorial](#getting-started). Enter Filebrowser address and user/password information.                                                                                |
-| Google Sheet ID    | Google Sheet ID: Upload the glossary file ```GDrive_glossary.xlsx``` to a Google Drive account and make it public. Extract the identifier code from the link and enter. You can also test with this provided example link: ```https://docs.google.com/spreadsheets/d/1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18/edit#gid=1994557483```, Identifier: ```1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18``` |
-| Style              | Visual theme.                                                                                                                                                                                                                                                                                                                                                                      |
-| Horizontal layout  | Layout option for small or low resolution screens.                                                                                                                                                                                                                                                                                                                                 |
-| Duplicate GMOs     | When duplicating a selected plasmid, GMOs will also be copied, however, with the current date. (Default, false).                                                                                                                                                                                                                                                                   |
-| Upload completed   | Only upload plasmid entries that were set to the status "Complete". (Default, false).                                                                                                                                                                                                                                                                                              |
-| Use JBEI/ice       | Enable uploading to the JBEI/ice instance defined in "Server credentials".                                                                                                                                                                                                                                                                                                         |
-| Use Filebrowser    | Enable uploading to the Filebrowser instance defined in "Server credentials".                                                                                                                                                                                                                                                                                                      |
-| Target organisms   | Define target organisms (working organisms for GMO generation). The organisms must first be present in the organism glossary.                                                                                                                                                                                                                                                      |
-| Fav. organisms     | Select some of the target organisms for generating several GMOs with one click using the ':)' convenience function. All organisms in ```Fav. organisms``` must be present in ```Target organisms```!                                                                                                                                                                               |
+| Setting            | Description                                                                                                                                                                                                                                                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Initials           | Define the user or project initials. Based on the entry, a folder on JBEI/ice will be generated into which plasmid entries will be uploaded. The initials should not and cannot be changed anymore at a later date.                                                                                                             |
+| GMO institute      | Provides governmental information on the GMO facility (Az. and Anlage Nr.) which will appear on the Formblatt-Z.                                                                                                                                                                                                                |
+| Server credentials | Generate an API key for a shared JBEI/ice account hosted locally or on the public server. Enter the key. Several accounts can be added to push plasmid data into multiple accounts if desired. See the [video tutorial](#getting-started). Enter [Filebrowser](https://filebrowser.org/) address and user/password information. |
+| GDrive Sheet ID    | See [instructions](#initial-setup) on how to configure the Google Sheets support. Extract the Sheet ID from the link and enter it here. ```https://docs.google.com/spreadsheets/d/1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18/edit#gid=1994557483```, Identifier: ```1QnyWcntaYdYkEqyUStWZedsb4ZKLsd18```                                 |
+| GDrive Folder ID   | See [instructions](#initial-setup) on how to configure the Google Sheets support. Extract the Folder ID from the link and enter it here.                                                                                                                                                                                        |
+| Style              | Visual theme.                                                                                                                                                                                                                                                                                                                   |
+| Horizontal layout  | Layout option for small or low resolution screens.                                                                                                                                                                                                                                                                              |
+| Duplicate GMOs     | When duplicating a selected plasmid, GMOs will also be copied, however, with the current date. (Default, false).                                                                                                                                                                                                                |
+| Upload completed   | Only upload plasmid entries that were set to the status "Complete". (Default, false).                                                                                                                                                                                                                                           |
+| Autosync GSheets   | Automatically synchronizes the online and local glossaries on startup and when new entries are being added (saved).                                                                                                                                                                                                             |
+| Use JBEI/ice       | Enable uploading genebank files and plasmid data to the JBEI/ice instance defined in "Server credentials".                                                                                                                                                                                                                      |
+| Use Filebrowser    | Enable uploading genebank files, attachments, and plasmid data to a local Filebrowser server defined in "Server credentials".                                                                                                                                                                                                   |
+| Use GDrive Folder  | Enable uploading genebank files, attachments, and plasmid data to the Google Drive folder defined in "Settings".                                                                                                                                                                                                                |
+| Zip files          | Zip files of each entry before uploading to Google drive resulting in a faster upload.                                                                                                                                                                                                                                          |
+| Target organisms   | Define target organisms (working organisms for GMO generation). The organisms must first be present in the organism glossary.                                                                                                                                                                                                   |
+| Fav. organisms     | Select some of the target organisms for generating several GMOs with one click using the ':)' convenience function. All organisms in ```Fav. organisms``` must be present in ```Target organisms```!                                                                                                                            |
 
 ### Where is all data stored?
 
@@ -90,7 +96,61 @@ Linux:
 
 ### Glossaries
 
-The ```Nucleic acids``` and ```Organisms``` glossaries can be imported and exported from and to ```*.xlsx``` files in the respective tabs. Another convenient and recommended way to manage the glossaries is to upload the ```GDrive_glossary.xlsx``` file to a [Google Drive](https://www.google.com/drive/) account, make the access public (Share --> Anyone with the link --> Set access rights to 'Editor' or 'Viewer'), and set the Google Sheets ID in the Settings tab (see section Settings). Entries can now be imported using the button ```Add entries from Google Sheets which not yet exist```. This approach allows a convenient collection of `Nucleic acid` and `Organism` definitions in teams. Please do not modify the names of headers and sheets. See the [video tutorial](#getting_started).
+The ```Nucleic acids``` and ```Organisms``` glossaries can be imported and exported from and to ```*.xlsx``` files in the respective tabs. Use the provided templates located in your [GMOCU user data folder](#where-is-all-data-stored) to prepare the data for import. Glossaries can also be imported from an existing Google Sheet defined in the Settings ([See setup](#google-drive-and-google-sheets-integration)). One setup, use the ```Online sync``` button to download new entries, update and integrate changed entries, and upload new entries. See below for configuration instructions for the Google Sheets integration.
+
+### Google Drive and Google Sheets integration
+
+Google drive and Google Sheet integration can be used to upload files and maintain/synchronize common `Nucleic acids` and `Organisms` glossaries, respectively.
+
+#### Initial setup
+
+The initial setup is only required once <u>per team</u> and includes the following steps:
+
+1) Create a Google Drive service account and download the credentials ```JSON``` file to your [GMOCU user data folder](#where-is-all-data-stored) with the file name ```gmocu_gdrive_credits.json```.
+
+2) In your own Google Drive, create an empty folder and share it with the email address of the service account with 'Editor' permission.
+
+3) In your own Google Sheets account, create an empty spreadsheet and share it with the email address of the service account with 'Editor' permission.
+
+Detailed steps to create the Google service account:
+
+- Log into the [Google Cloud Console](https://console.cloud.google.com/).
+
+- Create a new project or choose an existing one.
+
+- From the Menu, choose ```APIs and Services```. On the top, click on ```+ ACTIVATE APIs AND SERVICES``` and enable ```Google Drive API``` and  ```Google Sheets API```.
+
+- From the Menu, choose ```IAM & Admin``` and click on ```Service accounts```. On the top, click on ```+ CREATE SERVICE ACCOUNT``` and fill the details (Name, ID, and Description).
+
+- Set the role as ```Editor``` for the project.
+
+- The button ```+ CREATE KEY``` appears at the bottom. Click it and choose ```JSON``` key type. Create the key and download the file to your [GMOCU user data folder](#where-is-all-data-stored) with the name ```gmocu_gdrive_credits.json```. Distribute the file to all team members.
+
+Detailed steps share a common Google Drive Folder and Google Sheets glossary.
+
+- As team head or administrator, create an empty Google Sheets spreadsheet and share it with the email address of the service account ('Editor' permission). You will find the email address in the ```gmocu_gdrive_credits.json``` file. Copy the sheet ID in the link of the spreadsheet and distribute it to team members. The ID may look similar to ```1NnDS5R7gZ0zMd_2079ht0zxKpz-Z-ds12yM75_85j6g```.
+
+- Also, create an empty folder in your Google Drive and share it with the service account ('Editor' permission). Copy the folder ID at the end of the link and distribute it to team members. The ID may look similar to `1Tt0aEcq2jgxmWV44v0-quCdERqEs22nv`. 
+
+#### Individual setup
+
+Ensure to have the `gmocu_gdrive_credits.json` file in the [GMOCU user data folder](#where-is-all-data-stored) of all users. Enter the IDs of the Goole Sheet spreadsheet and the Google Drive folder in the Settings tab.
+
+#### Shared Google Sheets Glossaries usage
+
+With an empty Google Sheet, enter `Nucleic acids` and `Organisms` definitions in GMOCU or import them using the provided import templates (located in the [GMOCU user data folder](#where-is-all-data-stored)). Use the ```Sync online``` button to upload the data to the Google Sheet. On the first sync, the required sheets in the online file will be generated. When joining an existing glossary, simply configure the ID in the Settings and use the `Sync online` button to import them. <u>Do not import the data again using the template files.</u>
+
+**Note on glossaries curation:** Local users can download and upload glossary definitions. Data can only be edited before they have been synced. It is not possible to delete or change them. However, curation by an administrator is possible. Changes can be made online in the Google Sheet spreadsheet. On the next sync, the changes will be applied locally <u>and propagated to all existing plasmid entries</u>. The administrator may set the ```valid``` flag to ```0```to remove entries from the glossaries for all users.
+
+#### Shared Google Drive Folder usage
+
+The JBEI/ice server serves data browsing in teams, however, attachments such as sequencing results and additional documents can not be attached programatically. Therefore, all data can be uploaded either to a Google Drive folder or to a Filebrowser folder (see below). If activated and configured in the Settings, all data will be stored in the GDrive subfolder with the name of the ```initials``` of the user (button in GMO tab).
+
+#### Filebrowser support
+
+**Note:** Filebrowser support does not apply to Windows users. Use the Google Drive implementation instead.
+
+Upload plasmid genebank files and any files attached as "Attachement" together with a text file containing plasmid data in a folder tree to a local Filebrowser server (see below for server configuration). The address, user and password must be added in the Settings tab.
 
 ### Plasmid data
 
@@ -98,9 +158,9 @@ Enter plasmid data and GMOs in the ```Plasmid data``` tab. There are also functi
 
 ### Example data
 
-The ```example``` folder provides a selected set of `Nucleic acid` and `Organism` definitions (`GDrive_glossary.xlsx`) which can serve as a starting point for developing an inventory. The file can be uploaded to Google Drive for collaborative editing and import (see [Glossaries](#glossaries)). Similar lists are enclosed in the ``templates`` folder of the [GMOCU user data folder](#where-is-all-data-stored).
+The `example` folder contains a pre-filled `gmocu.db` file with testing data. The file can be copied into the [GMOCU user data folder](#where-is-all-data-stored). If no `gmocu.db` file exists, GMOCU will generate an empty database file on the initial start.
 
-The `example` folder further provides a ```gmocu.db``` file with testing data. The file can be copied into the [GMOCU user data folder](#where-is-all-data-stored). If no ```gmocu.db``` file exists, GMOCU will generate an empty database file on the initial start.
+A set of example `Nucleic acid` and `Organism` definitions is enclosed in the `templates` folder of the [GMOCU user data folder](#where-is-all-data-stored). It can be used to establish a first library of definitions and then be imported into GMOCU and further uploaded to the Google Sheets collection.
 
 ### GMO and Maintainance
 
@@ -108,13 +168,9 @@ The `example` folder further provides a ```gmocu.db``` file with testing data. T
 
 Check for completeness of the glossaries and duplicates of plasmid entries.
 
-#### JBEI/ice
+#### JBEI/ice, Filebrowser, GDrive
 
-Upload plasmid entries to JBEI/ice if configured in the Settings. Each upload will overwrite the information on the server. When ```Only new plasmids``` is checked, GMOCU will only upload entries with plasmid names that do not yet exist in the respective folder on the ICE server. Another way to update the information of a single plasmid, e.g. after editing is by pressing the ```ICE``` button in the top right corner of the ```Plasmid data``` tab. See the [video tutorial](#jbei-ice).
-
-#### Filebrowser
-
-Upload plasmid genebank files and any files attached as "Attachement" together with a text file containing plasmid data in a folder tree to a local Filebrowser server (see below for configuration).
+Upload plasmid entries to the services configured in the Settings (JBEI/ice, local Filebrowser instance, Google Drive folder). Each upload will overwrite the information on the server. Another way to update the information of a individual plasmid entries, e.g. after editing, is by pressing the ```UP``` button in the top right corner of the ```Plasmid data``` tab. See the [video tutorial](#jbei-ice).
 
 #### GMO
 
@@ -134,7 +190,7 @@ The data stored in tables within the `gmocu.db` file can be accessed by software
 
 ### Link to the public registry JBEI/ice database
 
-Make a free account at the [JBEI public registry](https://public-registry.jbei.org/). Generate an access token in the account settings and add it in the GMOCU settings tab. Note that you may not be able to delete entries again from the registry. Alternatively, install a local JBEI/ice instance (recommended, [see below](#install-jbeiice-as-docker-container-locally-or-on-a-server)).
+Create a free account at the [JBEI public registry](https://public-registry.jbei.org/). Generate an access token in the account settings and add it in the GMOCU settings tab. Note that you may not be able to delete entries again from the registry. Alternatively, install a local JBEI/ice instance (recommended, [see below](#install-jbeiice-as-docker-container-locally-or-on-a-server)).
 
 ### Hidden settings
 
@@ -201,8 +257,6 @@ Initiate the Filebrowser instance with:
 
 ```bash
 filebrowser config init -r /path/to/folder/on/server -a 134.99.70.14
-
-
 ```
 
 Replace the IP address with the static IP of your server or skip ``` -a ip-address``` if you would like to run the server on localhost. Start on boot with ```filebrowser```.
@@ -239,8 +293,8 @@ Set up the developmental ```gmocu``` environment:
 conda create --name gmocu python=3.9
 conda activate gmocu
 
-conda install PySimpleGUI pandas Pillow xlsxwriter openpyxl python-levenshtein
-pip install icebreaker pyinstaller==5.13.2 filebrowser-client
+conda install PySimpleGUI pandas Pillow xlsxwriter openpyxl gspread python-levenshtein PyDrive2
+pip install icebreaker pyinstaller filebrowser-client gspread-dataframe
 ```
 
 Deploy executable using Pyinstaller:
@@ -250,7 +304,7 @@ conda activate gmocu
 pyinstaller gmocu.spec
 ```
 
-The version numbers of the environment packages used for the deployment of GMOCU-0.4 are listed in the file ```GMOCU-0.4_env_packages.txt```.
+For the macOS build with the current version of pyinstaller (```pyinstaller-6.7.0```) you will have to move the ```Download``` folder and the ```gmcocu.sql``` file from ```GMOCU.app/Contents/Resources``` to ```GMOCU.app/Contents/MacOS```. On Windows and Linux, the two items have to be moved form the ```_internal``` folder to the ```gmocu``` folder.
 
 ### Modifying the information content of the generated reports
 
