@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 appname  = 'GMOCU'
-version_no  = float(0.7)
-vdate    = '2024-07-04'
+version_no  = float(0.71)
+vdate    = '2024-07-23'
 database = 'gmocu.db'
 
 # TODO:
@@ -762,6 +762,8 @@ def update_cassettes(old2new_annot_dict):
         for key, val in old2new_annot_dict.items():
             if key in row[1]:
                 #print('Found ', key, ' in', row[1])
+                key = re.sub('\(', '\(', key)
+                key = re.sub('\)', '\)', key)
                 new_content = re.sub('(?<=-)'+key+'(?=[-[])', val, '-'+row[1]+'-').strip('-')
                 cursor2.execute('UPDATE Cassettes SET content=? WHERE cassette_id=?', (new_content, row[0]))
     connection.commit()
@@ -775,11 +777,14 @@ def update_alias(old2new_annot_dict):
     for row in cursor:
         print(row)
         for key, val in old2new_annot_dict.items():
-            if key in row[2]:
-                #print('Found ', key, ' in', row[2])
-                new_content = re.sub('(?<=-)'+key+'(?=[-[])', val, '-'+row[2]+'-').strip('-')
-                #print('new content ', new_content)
-                cursor2.execute('UPDATE Plasmids SET alias=? WHERE id=?', (new_content, row[0]))
+            if row[2] not in ['', None]:
+                if key in row[2]:
+                    #print('Found ', key, ' in', row[2])
+                    key = re.sub('\(', '\(', key)
+                    key = re.sub('\)', '\)', key)
+                    new_content = re.sub('(?<=-)'+key+'(?=[-[])', val, '-'+row[2]+'-').strip('-')
+                    #print('new content ', new_content)
+                    cursor2.execute('UPDATE Plasmids SET alias=? WHERE id=?', (new_content, row[0]))
     connection.commit()
     connection.close()
     db['Plasmids'].requery()
@@ -1759,12 +1764,16 @@ def check_organisms():
         seen = set()
         dupes = [x for x in organissm_glossary_list if x in seen or seen.add(x)]
         missing_feature_organisms = np.setdiff1d(used_organisms_list, organissm_glossary_list)
+        missing_feat_org_pairs = []
+        for index, row in feature_organisms.iterrows():
+            if row['organism'] in missing_feature_organisms:
+                missing_feat_org_pairs.append(row['annotation'] + ': ' + row['organism'])
         redundant = np.setdiff1d(organissm_glossary_list, used_organisms_list)
         nonmissing = ''
         if len(missing_feature_organisms) == 0:
             nonmissing = True
         else:
-            sg.popup('The following organisms are associated with used Nucleic acids features but are not in the Organism glossary:\n', ",".join(missing_feature_organisms), '\nPlease check if there are no misspells and, if not, add them to the glossary!', title='Organisms missing!')
+            sg.popup('The following organisms are associated with used Nucleic Acids features, but missing in the "Organisms" glossary:\n', "\n".join(missing_feat_org_pairs), '\nPlease check if there are no misspells and, if not, add them to the glossary!', title='Organisms missing!')
         return [nonmissing, redundant, dupes]
     except Exception as e:
         sg.popup(e)
@@ -1909,6 +1918,8 @@ while True:
             update_cassettes({old_annotation:corrected_value})
             update_alias({old_annotation:corrected_value})
         refresh_autocomp_options()
+        check_features()
+        check_organisms()
         
     elif event == 'settingsActions.db_save':
         db['Settings'].save_record(display_message=False)
@@ -1953,7 +1964,7 @@ while True:
         win['Settings.font_size'].update(disabled=True) 
         win['Settings.horizontal_layout'].update(disabled=extra_el_disabled)
         win['Settings.duplicate_gmos'].update(disabled=extra_el_disabled)
-        #win['Settings.upload_completed'].update(disabled=extra_el_disabled)
+        #win['Settings.upload_completed'].update(disabled=extra_el_disabled) # disabled for now
         #win['Settings.upload_abi'].update(disabled=True) # disabled for now
         win['Settings.use_ice'].update(disabled=extra_el_disabled)
         if sys.platform != "win32":
@@ -2014,6 +2025,7 @@ while True:
             win['-FEATURECOMBO-'].Update(values = orga_selection)
             win['-SETSELORGA-'].Update(values = orga_selection)
         refresh_autocomp_options()
+        check_organisms()
 
 ### Duplicate plasmid ###
     elif event == '-DUPLICATE-':
