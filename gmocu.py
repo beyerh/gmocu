@@ -1731,7 +1731,7 @@ def check_features():
         connection = sqlite3.connect(database)
         glossary_features = pd.read_sql_query("SELECT * FROM Features ", connection)
 
-        if glossary_features.isnull().any().any() or (glossary_organisms.eq("")).any().any():
+        if glossary_features.isnull().any().any() or (glossary_features.eq("")).any().any():
             sg.popup("Empty fields in the Nucleic acid features glossary detected. Please fill all fields.")
 
         glossary_features = list(glossary_features['annotation'])
