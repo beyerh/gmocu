@@ -18,6 +18,17 @@ For instructions on installing a local instance of JBEI/ice (optional), see furt
 
 Download the new [Release]([Releases · beyerh/gmocu · GitHub](https://github.com/beyerh/gmocu/releases)) and replace the previous version with it. GMOCU will resource the data from the [GMOCU user data folder](#where-is-all-data-stored) in the user directory and eventually update the database file structure. [Backup](#backup) your data before updating.
 
+### macOS error
+If you face the following error on macOS, proceed as follows.
+<img align="left" width="200" alt="macOS error" src="https://github.com/user-attachments/assets/6a57ff02-4f63-4026-afd6-365b67466bec">
+
+
+Copy the GMOCU.app to the Desktop or navigate accordingly. Execute the following command to remove the app from quarantaine.
+```
+cd Desktop
+xattr -c GMOCU.app
+```
+
 ## Usage
 
 ### Video tutorials
