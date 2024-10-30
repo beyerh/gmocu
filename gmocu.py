@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 appname  = 'GMOCU'
-version_no  = float(0.71)
-vdate    = '2024-07-23'
+version_no  = float(0.72)
+vdate    = '2024-10-30'
 database = 'gmocu.db'
 
 # TODO:
@@ -793,8 +793,19 @@ def sync_gsheets():
     #todo ignore if uid '', necessary?
     credits = os.sep.join([user_data, 'gmocu_gdrive_credits.json'])
     sheet_id = db['Settings']['gdrive_glossary']
+    connection = sqlite3.connect(database)
+
+    glossary_features = pd.read_sql_query("SELECT * FROM Features ", connection)
+    glossary_organisms = pd.read_sql_query("SELECT * FROM Organisms ", connection)
+
     if not os.path.isfile(credits) or sheet_id == None or sheet_id == '' or sheet_id == 'ID from link':  # check if service accout credis exist
         sg.popup("Please setup the access to the Google Sheets online glossaries.\n\nFollow the instructions at https://github.com/beyerh/gmocu. Add the Sheet ID in the Settings and save the file 'gmocu_gdrive_credits.json' to your GMOCU folder.")
+
+    elif glossary_features.isnull().any().any() or (glossary_features.eq("")).any().any():
+        sg.popup("Empty fields in the Nucleic acids features glossary detected. Please fill all fields first to sync complete data with the online glossary.")
+    elif glossary_organisms.isnull().any().any() or (glossary_organisms.eq("")).any().any():
+        sg.popup("Empty fields in the Organisms glossary detected. Please fill all fields first to sync complete data with the online glossary.")
+
     else:
         try:
             gc = gspread.service_account(filename=credits)
@@ -828,8 +839,6 @@ def sync_gsheets():
         valid_online_features = online_features[online_features['valid'] == 1]
         online_organisms = get_as_dataframe(organisms_sheet).dropna(how='all')
         valid_online_organisms = online_organisms[online_organisms['valid'] == 1]
-
-        connection = sqlite3.connect(database)
 
         # get local features
         try:
@@ -1102,7 +1111,9 @@ def generate_formblatt(lang):
         return(fZ_data)
 
     except Exception as e:
-        sg.popup(e)
+        trace_back = sys.exc_info()[2]
+        line = trace_back.tb_lineno
+        sg.popup("Line: ", line, e)
 
 def generate_plasmidlist():
 
@@ -1718,13 +1729,18 @@ def check_plasmids():
 def check_features():
     try:
         connection = sqlite3.connect(database)
-        glossary_features = pd.read_sql_query("SELECT annotation FROM Features ", connection)
+        glossary_features = pd.read_sql_query("SELECT * FROM Features ", connection)
+
+        if glossary_features.isnull().any().any() or (glossary_organisms.eq("")).any().any():
+            sg.popup("Empty fields in the Nucleic acid features glossary detected. Please fill all fields.")
+
         glossary_features = list(glossary_features['annotation'])
         # check for duplicates in glossary_features
         seen = set()
         dupes = [x for x in glossary_features if x in seen or seen.add(x)]
         db_cassette_plasmid_data = pd.read_sql_query("SELECT content, plasmid_id FROM Cassettes ", connection)
         plasmid_ids = list(db_cassette_plasmid_data['plasmid_id'])
+        #print(plasmid_ids)
         used_cassettes = list(db_cassette_plasmid_data['content'])
         # remove variants in []
         used_cassettes = [re.sub('\[.*?]', '', cassette) for cassette in used_cassettes]
@@ -1733,8 +1749,9 @@ def check_features():
         for i in range(len(used_cassettes)):
             used_features = used_cassettes[i].split('-')
             total_used_features += used_features
-            comparison = np.setdiff1d(used_features, glossary_features) # yields the elements in `used_features` that are NOT in `glossary_features`
+            comparison = np.setdiff1d(used_features, glossary_features) # yields the elements in `used_features` that are NOT in `glossary_features
             plasmid_name = pd.read_sql_query("SELECT name,id FROM Plasmids WHERE id = {}".format(plasmid_ids[i]), connection)['name'][0]
+            #print(plasmid_ids[i], plasmid_name)
             for element in comparison:
                 missing_features.append(plasmid_name + ': ' + element)
         redundant = np.setdiff1d(glossary_features, total_used_features)
@@ -1745,8 +1762,12 @@ def check_features():
             sg.popup('The following features are used in the cassettes of the listed plasmids, but missing in the "Nucleic acids" feature glossary:\n', '\n'.join(missing_features), '\nPlease check if there are no misspells and, if not, add them to the glossary!', title='Features missing!')
 
         return [nonmissing, redundant, dupes]
+    #except Exception as e:
+        #sg.popup(e)
     except Exception as e:
-        sg.popup(e)
+        trace_back = sys.exc_info()[2]
+        line = trace_back.tb_lineno
+        sg.popup("Line: ", line, e)
     finally:
         connection.close()
 
