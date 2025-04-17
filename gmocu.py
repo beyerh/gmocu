@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 appname  = 'GMOCU'
-version_no  = float(0.72)
-vdate    = '2024-10-30'
+version_no  = float(0.73)
+vdate    = '2025-04-07'
 database = 'gmocu.db'
 
 # TODO:
@@ -1935,7 +1935,7 @@ while True:
             orga_selection = select_orga()
             win['-FEATURECOMBO-'].Update(values = orga_selection)
             win['-SETSELORGA-'].Update(values = orga_selection)
-        if old_annotation != corrected_value:
+        if old_annotation and old_annotation != corrected_value:
             update_cassettes({old_annotation:corrected_value})
             update_alias({old_annotation:corrected_value})
         refresh_autocomp_options()
